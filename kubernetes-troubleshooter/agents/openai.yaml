@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kubernetes Troubleshooter"
+  short_description: "Investigate Kubernetes incidents with evidence"
+  default_prompt: "Use $kubernetes-troubleshooter to investigate this incident with read-only diagnostics and historical metrics."
