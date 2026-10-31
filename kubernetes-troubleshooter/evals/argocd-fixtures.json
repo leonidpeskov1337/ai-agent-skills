@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "prompt": "Argo CD is enabled. api times out to ledger. Repos and read-only token file are supplied; find the cause.",
+    "context": {"cluster": "prod-eu", "namespace": "payments", "argocd_enabled": true, "local_repo": "/work/charts", "token_file": "/secure/gitlab-readonly", "remote_reads": false},
+    "evidence": ["E1: api is managed by a separate Helm release; approved deployment records and Argo Application inventory show no matching resource or implicated dependency.", "E2: source api egress policy selects api, allows UDP53 only; ledger ingress permits TCP8443; CNI flow verdict denies api->ledger:8443.", "E3: Argo has unrelated OutOfSync monitoring app since last week; api timeout starts at 09:00 today after egress policy change."]
+  },
+  {
+    "id": 2,
+    "prompt": "Argo CD is disabled on prod-eu according to our prompt. Investigate checkout 503s.",
+    "context": {"cluster": "prod-eu", "namespace": "payments", "argocd_enabled": false, "approved_management_context": "management-eu"},
+    "evidence": ["E1: checkout Deployment self-referencing tracking-id checkout:apps/Deployment:payments/checkout, installation-id remote-eu.", "E2: management-eu/gitops Application checkout inventory contains that Deployment and approved destination mapping resolves to prod-eu; applied revision b starts at 09:00.", "E3: b pods exit1 with required non-secret config REGION absent; a pods on same node/traffic succeed; app Synced but Degraded."]
+  },
+  {
+    "id": 3,
+    "prompt": "Argo says checkout is Synced and Healthy, but checkout latency is bad. Should we sync it again?",
+    "context": {"cluster": "prod-eu", "namespace": "payments", "argocd_enabled": true},
+    "evidence": ["E1: verified managing Application desired/applied revision a unchanged for seven days; fresh reconciliation and no sync failure.", "E2: checkout CPU/compute stable; same request trace shows inventory wait1.4s vs40ms baseline; inventory pool wait1.3s with stable40ms DB query.", "E3: request p95 .1s->1.5s at09:00 at stable100RPS; no inventory config/history available."]
+  },
+  {
+    "id": 4,
+    "prompt": "The app has not picked up a config fix. Local chart checkout looks correct. Read-only GitLab token location /secure/scm is supplied for gitlab.example.com/team/values only.",
+    "context": {"argocd_enabled": true, "remote_reads": true, "approved_host": "gitlab.example.com", "allowed_repository": "team/values", "secure_auth_adapter": "unavailable"},
+    "evidence": ["E1: Application has ordered sources [charts/api version1.2.3, team/values refvalues main]; attempted sync revisions [1.2.3,def]; last successful history [1.2.3,abc].", "E2: ComparisonError: external $values path environments/prod/api.yaml missing atdef; repo-server same revision/path error.", "E3: /work/charts local HEADxyz contains chart only; /work/values HEADghi contains the fix but no evidence it is pushed or applied; inline values may contain credentials."]
+  },
+  {
+    "id": 5,
+    "prompt": "An ApplicationSet owns our app and its sync is stuck. Fix delivery.",
+    "context": {"argocd_enabled": true, "cluster": "prod-eu", "namespace": "payments"},
+    "evidence": ["E1: App owner ApplicationSet services; desired revisionb; operation Running since09:00; first wave PreSync Job migrate failed with quota exceeded; later Deployment still revisiona.", "E2: named Job FailedCreate event says requested memory2Gi exceeds remaining namespace quota1Gi; ApplicationSet controller conditions show generated app current.", "E3: migration hook can change schema; auto-sync enabled and parent template defines source; existing application a serves normally."]
+  },
+  {
+    "id": 6,
+    "prompt": "argocd.enabled is unknown. A pod has an instance label and tracking annotation. Is Argo the cause of my Pending pod?",
+    "context": {"argocd_enabled": null, "cluster": "prod-eu", "namespace": "payments"},
+    "evidence": ["E1: pod p has instance labelapi; copied tracking-id api:apps/Deployment:other-namespace/api does not reference p; Application reads forbidden, control-plane location unknown.", "E2: scheduler reports Insufficient cpu on all eligible nodes; pod requests4 cores, eligible unrequested allocatable2 cores each including overhead; node measured CPU20%.", "E3: no revision/sync timeline or reliable owner-source evidence is available."]
+  }
+]

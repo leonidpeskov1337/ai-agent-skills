@@ -9,10 +9,11 @@ def main():
     skill = repo / "kubernetes-troubleshooter"
     output = repo / "dist" / "kubernetes-troubleshooter.skill"
     output.parent.mkdir(exist_ok=True)
-    included = [skill / "SKILL.md", skill / "README.md"]
+    included = [skill / "SKILL.md", skill / "README.md", skill / "prompt.md"]
     for folder, suffix in (("agents", ".yaml"), ("scripts", ".py"),
                            ("references", ".md"), ("playbooks", ".md"), ("examples", ".md"),
-                           ("evals", ".json"), ("evals", ".md"), ("tests", ".py")):
+                           ("evals", ".json"), ("evals", ".md"), ("tests", ".py"),
+                           ("ArgoCD", ".md")):
         included.extend(sorted((skill / folder).glob("*" + suffix)))
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for path in included:

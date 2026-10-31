@@ -3,6 +3,9 @@
 Choose one or two likely starting points, then follow evidence across domains.
 These are hypothesis branches, not a checklist to execute in full.
 
+For linked GitOps sync/source/component symptoms, start with
+[Argo CD relevance and routing](../ArgoCD/README.md) before deeper investigation.
+
 - [CrashLoopBackOff](crashloopbackoff.md): Repeated restarts and backoff after container starts.
 - [OOMKilled](oomkilled.md): Last termination reason OOMKilled or exit 137.
 - [ImagePullBackOff](imagepullbackoff.md): Image pull fails before application startup.

@@ -1,5 +1,14 @@
 # Source provenance
 
+Argo CD extension reviewed 2026-10-31 against official
+[resource tracking](https://argo-cd.readthedocs.io/en/stable/user-guide/resource_tracking/),
+[multiple sources](https://argo-cd.readthedocs.io/en/stable/user-guide/multiple_sources/),
+[sync waves](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/),
+[metrics](https://argo-cd.readthedocs.io/en/stable/operator-manual/metrics/),
+[troubleshooting](https://argo-cd.readthedocs.io/en/stable/operator-manual/troubleshooting/)
+and [app get flags](https://argo-cd.readthedocs.io/en/stable/user-guide/commands/argocd_app_get/).
+Tracking and metric behavior must be checked against the installed version.
+
 Reviewed 2026-10-31. Instructions and playbooks are original. Consult docs matching
 the actual server, exporter and controller versions before relying on optional APIs.
 

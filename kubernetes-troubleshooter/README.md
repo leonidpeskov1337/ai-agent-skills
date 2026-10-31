@@ -2,6 +2,8 @@
 
 An installable Agent Skill for hypothesis-driven production incident investigation,
 with 27 targeted playbooks and executable read-only evidence/metrics helpers.
+Includes conditional [Argo CD investigation](ArgoCD/README.md), safe Application/
+ApplicationSet evidence projection, and local deployment-repository correlation.
 
 ## Installation and prerequisites
 
@@ -18,6 +20,13 @@ helpers do not install RBAC or request administrative privileges. No Python pack
 dependencies are needed at runtime. Never bundle kubeconfig, tokens or real logs.
 
 ## Invocation
+
+Copy [prompt.md](prompt.md) to describe symptoms, known cluster/metrics access,
+Terraform/Helm/GitOps repository paths, scoped read-only token-file locations and
+optional Argo CD context. Unknown fields can stay empty. Do not commit the filled-in
+copy here. The host interprets it; helpers do not automatically load prompt files or
+consume repository token files. Argo CD presence triggers a bounded relevance check,
+not an automatic assumption that it manages the affected workload or caused failure.
 
 ```text
 Use $kubernetes-troubleshooter to investigate checkout p95 latency since

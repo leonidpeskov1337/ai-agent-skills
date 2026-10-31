@@ -7,6 +7,7 @@ import os
 import signal
 import threading
 import time
+from argocd_projection import project_argo
 
 MAX_BYTES = 2_000_000
 
@@ -109,8 +110,21 @@ def kubectl(context, namespace, args):
     return run(command + args)
 
 
+def tracking_metadata(meta):
+    annotations = meta.get("annotations") or {}
+    safe = {"argocd_tracking": {key: annotations[key] for key in (
+        "argocd.argoproj.io/tracking-id", "argocd.argoproj.io/installation-id",
+        "argocd.argoproj.io/hook", "argocd.argoproj.io/sync-wave") if key in annotations}}
+    labels = meta.get("labels") or {}
+    if "app.kubernetes.io/instance" in labels:
+        safe["instance_label_hint"] = labels["app.kubernetes.io/instance"]
+    return safe
+
+
 def projection(item):
-    """Whitelist fields; omit annotations, env, commands, Secret refs and config bodies."""
+    """Whitelist fields; omit arbitrary annotations, env, Secret refs and config bodies."""
+    if item.get("kind") in ("Application", "ApplicationSet"):
+        return redact_values(project_argo(item) | tracking_metadata(item.get("metadata") or {}))
     meta = item.get("metadata", {})
     spec = item.get("spec", {})
     workload = spec.get("jobTemplate", {}).get("spec", spec)
@@ -121,6 +135,7 @@ def projection(item):
             "namespace": meta.get("namespace"), "uid": meta.get("uid"),
             "created": meta.get("creationTimestamp"), "owners": meta.get("ownerReferences", []),
             "containers": containers}
+    safe.update(tracking_metadata(meta))
     safe["initContainers"] = [
         {k: c[k] for k in ("name", "image", "resources", "restartPolicy") if k in c}
         for c in template.get("initContainers", [])]
@@ -151,7 +166,8 @@ RESOURCES = {"pods", "deployments", "statefulsets", "daemonsets", "replicasets",
              "persistentvolumeclaims", "storageclasses", "csidrivers",
              "horizontalpodautoscalers", "ingresses", "networkpolicies",
              "gateways.gateway.networking.k8s.io", "httproutes.gateway.networking.k8s.io",
-             "servicemonitors.monitoring.coreos.com", "podmonitors.monitoring.coreos.com"}
+             "servicemonitors.monitoring.coreos.com", "podmonitors.monitoring.coreos.com",
+             "applications.argoproj.io", "applicationsets.argoproj.io"}
 
 
 def get_resources(context, namespace, resource, selector=None, name=None, field_selector=None):

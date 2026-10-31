@@ -1,5 +1,8 @@
 # Validation and evaluation results
 
+The original build results below are retained for provenance. The prompt/Argo CD
+extension section at the end records the current 37-test suite and new scenarios.
+
 Executed 2026-10-31 on Windows, Python 3.14.7. No live cluster, production API or real
 credentials were used. Runtime helpers require only Python 3.10+ standard library;
 PyYAML 6.0.3 was installed into a temporary validation-only directory.
@@ -67,3 +70,40 @@ The local untracked `kubernetes-troubleshooter-workspace/iteration-1/` holds the
 official aggregate JSON/Markdown and static `review.html`. Source grading and reports
 above are committed for portable review. The package builder verifies ZIP integrity;
 the generated checksum accompanies the local `.skill` artifact.
+
+## Prompt and Argo CD extension — 2026-10-31
+
+Executed the full updated helper suite: **37 tests passed** (original 29 plus 8
+Argo tests). Both Anthropic and host Skill Creator validators again returned
+`Skill is valid!`. The prompt's YAML block was parsed using the existing temporary
+PyYAML dependency; optional/unknown fields and read-only/remote-read defaults have
+the intended types. Packaging includes the prompt, ArgoCD folder and new helper.
+
+New transport/projection tests preserve ordered multi-source revisions, remote
+destinations, parent Application tracking and ApplicationSet ownership/conditions,
+while excluding inline Helm values, plugin data, generator credential data,
+manifests and credentials in source/destination URLs. They also cover nullable
+optional fields, explicit control-plane context and denied Application reads.
+Status/error messages remain subject to best-effort redaction and manual review.
+
+A fresh agent completed six synthetic scenarios using the skill and raw inputs,
+without reading expected answers or making external/credential reads. Parent manual
+review found **12/12 prewritten assertions satisfied**. Cases covered unrelated Argo
+drift, remote management despite a disabled hint, runtime latency despite Synced/
+Healthy, multi-source/local-versus-applied revisions, blocked migration hooks and
+ApplicationSet ownership, and copied tracking/denied access with scheduler pressure.
+The evaluator suggested clarifying that FailedCreate is not evidence of migration
+execution; that clarification was applied. No material routing gap was reported.
+
+This was one batched extension run with parent grading, not a repeated independent
+benchmark or a new baseline comparison. The initial 15-case model evaluation was
+not rerun. No claim of live Argo/GitHub/GitLab integration or token-file authentication
+is made; those require authorized host tools/adapters and real environment testing.
+
+- [Extension raw fixtures](argocd-fixtures.json)
+- [Extension assertions](argocd-evals.json)
+- [Independent agent reports](argocd-reports.json)
+- [Parent-reviewed grades with report excerpts](argocd-grading.json)
+
+A static official-framework viewer is generated under the local untracked
+`kubernetes-troubleshooter-workspace/argocd/review.html` for optional human review.

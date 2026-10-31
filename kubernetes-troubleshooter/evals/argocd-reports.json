@@ -1,0 +1,139 @@
+[
+  {
+    "id": 1,
+    "management_and_relevance": "Management unsupported for api and implicated dependencies: approved Helm records and inventory exclude Argo (E1). Stop Argo branch; unrelated monitoring drift is not relevant (E3).",
+    "assessment": "High-confidence immediate cause: api egress policy permits UDP53 only, blocking ledger TCP8443 as independently shown by CNI denial (E2). Timeout onset follows the 09:00 policy change (E3).",
+    "evidence": [
+      "E1: supplied Helm deployment records and Argo inventory exclude related management.",
+      "E2: api policy UDP53 only; ledger ingress TCP8443 allowed; CNI denies api->ledger:8443.",
+      "E3: timeout begins after egress change at09:00; unrelated monitoring drift is a week old."
+    ],
+    "alternatives": [
+      "Ledger ingress denial disfavored by TCP8443 allowance (E2).",
+      "Listener/endpoint or DNS failures could coexist but explicit egress denial already explains blocked connections.",
+      "Argo drift lacks ownership and timing links (E1,E3)."
+    ],
+    "next_reads": [
+      "Resolve exact context, policy name and endpoint identities; obtain retained effective-policy and flow records before/during/after onset and a permitted-source comparison.",
+      "Compare only authorized non-secret policy source with applied revision; remote_reads=false, so do not access supplied token or remote repository."
+    ],
+    "remediation_risk_approval": "Recommend narrowly allowing verified api->ledger TCP8443 in the owning policy source. Exact YAML needs target/selectors. Separate explicit approval required for any policy/source write; none performed. Preserve previous policy/source; excessive egress is the main risk. Rollback may restore timeout and needs a reviewed containment decision.",
+    "verification": "Following approved correction, verify effective allowed flow, api-ledger request success, recovered timeout/latency under comparable load across multiple observation cycles, and preserved restrictions elsewhere.",
+    "limitations": "Offline synthetic evidence only; no live/repository/credential/network reads. Date/timezone, UTC collection time, UIDs, exact context/policy, historical metrics and severity unknown; no observed recovery."
+  },
+  {
+    "id": 2,
+    "management_and_relevance": "Confirmed remote management despite disabled hint: matching self-tracking identity/installation remote-eu plus management-eu/gitops checkout inventory and approved prod-eu mapping (E1,E2).",
+    "assessment": "High-confidence rollout runtime failure: b begins09:00 and exits1 because required non-secret REGION is absent, while a works on same node/traffic (E2,E3). Missing config is a strong cause of failed b pods and likely 503 contributor; exact source defect and fraction of 503s remain unverified. Synced does not imply runtime health.",
+    "evidence": [
+      "E1: checkout:apps/Deployment:payments/checkout and installation-id remote-eu.",
+      "E2: management-eu/gitops checkout inventory matches prod-eu Deployment; b applied09:00.",
+      "E3: b exit1 missing REGION; matched a pods succeed; Synced/Degraded."
+    ],
+    "alternatives": [
+      "Node/traffic cause disfavored by matched a success (E3).",
+      "A b-specific config contract change versus removed deployment key requires source comparison.",
+      "Routing/endpoints may additionally contribute to503s; correlate request failures."
+    ],
+    "next_reads": [
+      "Read checkout Application safe source/revision/history/operation fields in explicit management-eu context and gitops namespace.",
+      "Resolve workload context and inspect checkout owner/UID, non-secret REGION presence/reference, readiness/endpoints and bounded b previous logs/events.",
+      "Compare sanitized a/b config contract and 503 timeline at09:00."
+    ],
+    "remediation_risk_approval": "Restore verified REGION through owning source or correct b contract; do not guess its value. Source, auto-sync and exact target must be established before commands. Any write/sync requires explicit approval; none executed. Wrong-region config can misroute data. Preserve prior config; rollback to a requires schema/data compatibility review, not just evidence that a pods run.",
+    "verification": "Require desired/applied convergence, intended REGION configuration, sustained ready pods without exit1, healthy endpoints and recovered503/latency at matched traffic across multiple reconciliation/observation cycles.",
+    "limitations": "Offline synthetic evidence only. Correct REGION, source/auto-sync, UIDs, UTC date/timezone, request history and rollback compatibility absent. Severity/impact fraction and recovery unmeasured."
+  },
+  {
+    "id": 3,
+    "management_and_relevance": "Managing Application verified, but a unchanged seven days, fresh reconciliation and no sync failure (E1). No supported Argo causal link; do not sync again.",
+    "assessment": "High-confidence localization to inventory pool waiting, underlying cause unresolved. At stable100RPS request p95 rises0.1s->1.5s:15x (+1400%). Sample trace inventory wait40ms->1.4s:35x, including1.3s pool wait with stable40ms DB query (E2,E3). Trace timing is not a population percentile or proof of undersized pool.",
+    "evidence": [
+      "E1: unchanged desired/applied a for seven days; fresh reconciliation/no sync failure.",
+      "E2: checkout compute stable; trace inventory wait1.4s vs40ms, pool wait1.3s, DB query40ms.",
+      "E3: request p95 0.1s->1.5s at09:00, stable100RPS; inventory history/config missing."
+    ],
+    "alternatives": [
+      "Checkout rollout/CPU saturation disfavored by E1,E2.",
+      "Pool undersizing, leaked/long-held connections, inventory concurrency or competing DB consumers remain indistinguishable.",
+      "Stable sampled DB query does not exclude unsampled slow queries; stable aggregateRPS does not establish unchanged traffic mix."
+    ],
+    "next_reads": [
+      "Resolve inventory context/workload and dependency identities.",
+      "Obtain pool active/idle/max/pending/timeouts and acquisition/hold distributions before/during/after onset, inventory rollout/config/concurrency history and matched traces.",
+      "Compare DB sessions/capacity/query distributions and other consumers, validating metric labels/freshness/coverage."
+    ],
+    "remediation_risk_approval": "No evidence supports sync/refresh/restart. Select pool/concurrency/code fix only after discriminating hypotheses. Pool increases risk DB overload; restart risks connection storm and masking leak. Changes need verified source/target and explicit approval; none performed. Preserve prior config/revision and rollback on worse pool wait, errors or DB pressure.",
+    "verification": "Request p95 should approach0.1s at comparable100RPS/mix, with pool wait near validated baseline, acceptable timeouts and DB pressure over a representative sustained window and multiple cycles. Synced/Healthy alone is insufficient.",
+    "limitations": "Offline synthetic evidence; no history/API or pool config. Trace coverage, p95 window, timezone/date, exact inventory target, pool baseline, SLO/severity and recovery unknown."
+  },
+  {
+    "id": 4,
+    "management_and_relevance": "Argo comparison/render path directly relevant to missing rollout (E1,E2). Exact Application, destination, workload tracking and control-plane identity remain unspecified.",
+    "assessment": "High-confidence multi-source render blocker: source index0 charts/api1.2.3 and index1 team/values refvalues main map to attempted[1.2.3,def]; missing environments/prod/api.yaml atdef is corroborated by repo-server (E1,E2). Last successful history[1.2.3,abc] is not proof of current live state. Local chartxyz and valuesghi do not prove pushed/applied fix (E3).",
+    "evidence": [
+      "E1: ordered sources, attempted[1.2.3,def], last successful[1.2.3,abc].",
+      "E2: ComparisonError and repo-server both identify exact missing external values path atdef.",
+      "E3: chart HEADxyz only chart; values HEADghi has fix but push/apply unproven; inline values can hold credentials."
+    ],
+    "alternatives": [
+      "Local chart correctness does not resolve external values revision failure (E1,E3).",
+      "Wrong/case-mismatched path, absent file atdef or unpushedghi remain possible underlying causes.",
+      "Auth/TLS failure less supported than matching missing-path errors; narrow approved provider evidence could discriminate."
+    ],
+    "next_reads": [
+      "Obtain Application/control-plane identities and sanitized source/ref/path/reconciliation/operation fields plus live applied revisions; retain positional source mapping.",
+      "Request sanitized file-existence/history for that path atdef/abc/ghi and whetherghi is reachable from approved main.",
+      "Remote scope is only HTTPS gitlab.example.com/team/values. Secure adapter unavailable: do not read/print /secure/scm or improvise auth; use supplied sanitized artifacts until an approved secure adapter exists. Do not dump inline values."
+    ],
+    "remediation_risk_approval": "Correct/publish verified values path/ref in owning source after proving desired revision/content. No exact commands without target/source/auto-sync. Git writes may auto-deploy and need explicit approval, as do refresh/sync; none performed. Preserve last successful tuple; reverting toabc needs current live-state and schema/data compatibility review. Broad config/credential deployment is a risk.",
+    "verification": "Confirm file at resolved values revision, successful comparison/render, clear errors and ordered source/applied convergence; verify intended non-secret config behavior and runtime health across multiple cycles without exposing values.",
+    "limitations": "Offline synthetic evidence only. Secure adapter unavailable; no credential access. Exact Application/control-plane/destination, timestamps, pushed reachability, live state, impact and safe correction unknown."
+  },
+  {
+    "id": 5,
+    "management_and_relevance": "ApplicationSet services owns app/source and generated app is current (E1-E3). Argo hook/wave delivery relevant; generator failure unsupported.",
+    "assessment": "High-confidence delivery blocker: first PreSync migrate Job cannot create a pod because2Gi request exceeds1Gi remaining quota, blocking later Deployment at a while desiredb operation remains Running since09:00 (E1,E2). Existinga serves normally (E3), so runtime outage not established. FailedCreate does not prove migration executed or completed.",
+    "evidence": [
+      "E1: ApplicationSet services owner, desiredb, Running since09:00, failed first-wave PreSync migrate, Deploymenta.",
+      "E2: FailedCreate memory2Gi vs1Gi quota remaining; generated app current.",
+      "E3: schema-changing hook possible, auto-sync enabled, parent template owns source, a serves normally."
+    ],
+    "alternatives": [
+      "ApplicationSet generation failure disfavored by current generated app (E2).",
+      "b runtime failure not exercised because later Deployment blocked.",
+      "Other quota limits or migration logic may fail after admission; earlier attempts may have side effects and require execution history."
+    ],
+    "next_reads": [
+      "Resolve exact Application/control-plane and Job/quota identities; obtain safe operation/hook timestamps, UID, pod/Job status and quota events.",
+      "Read quota hard/used and scoped consumers, hook requests/limits/retry/delete policy and execution history without rerunning it.",
+      "Inspect sanitized parent source/template scope and migration idempotency, schema compatibility, backup/data recovery prerequisites."
+    ],
+    "remediation_risk_approval": "Propose reviewed quota/capacity change or justified request reduction after capacity/measured migration-memory evidence. Parent/source edits with auto-sync may immediately resume migration and fan out. Exact action and migration sequence require explicit approval; no sync/refresh/termination/rerun/child patch/change executed. Preserve quota/source; establish backup/data recovery since Git rollback alone cannot undo schema changes. Existinga can continue serving.",
+    "verification": "After approval, confirm sufficient quota without peer pressure, migration succeeds once with validated schema/data, operation completes and Deploymentb becomes ready; requests remain healthy across multiple cycles. Stop/rollback triggers: migration errors, memory pressure, incompatible schema or request regression.",
+    "limitations": "Offline synthetic evidence. Application/control-plane/quota exact identities, event freshness, migration side effects, measured memory and compatible recovery plan absent;09:00 lacks date/timezone. No demonstrated runtime outage or recovery."
+  },
+  {
+    "id": 6,
+    "management_and_relevance": "Ownership unresolved. Instance label alone insufficient; copied annotation identifies Deployment in other-namespace rather than p, with no reliable owner chain (E1,E3). Forbidden reads mean unavailable evidence, not absent Applications. Remote/custom management possible; do not scan unknown control planes.",
+    "assessment": "High-confidence immediate Pending mechanism:4-core request cannot fit any eligible node with only2 cores unrequested allocatable including overhead (E2).20% measured CPU does not equal request-based scheduling headroom; cross-node capacity cannot be combined for one pod. Why sizing/capacity changed and whether Argo delivered it remain unresolved (E3).",
+    "evidence": [
+      "E1: p instance labelapi; copied api:apps/Deployment:other-namespace/api mismatch; Application reads forbidden, control plane unknown.",
+      "E2: scheduler Insufficient cpu everywhere eligible;4-core request vs2-core available each, measuredCPU20%.",
+      "E3: no revision/sync timeline or reliable source ownership."
+    ],
+    "alternatives": [
+      "Argo reconciliation cause lacks ownership/timing support (E1,E3).",
+      "Runtime CPU saturation is unnecessary for scheduler rejection and differs from request accounting (E2).",
+      "Oversized request, eligibility constraints and insufficient per-node capacity remain underlying alternatives; other scheduler blockers could coexist."
+    ],
+    "next_reads": [
+      "Resolve exact kubeconfig context, then p UID/owner chain, effective CPU requests including init/sidecars/overhead, scheduler events and eligible-node allocatable/request totals.",
+      "Review safe affinity/taints/constraints, authorized capacity/autoscaler events and representative CPU peaks before request resizing.",
+      "If authorized control-plane identity or retained inventory is provided, make one bounded ownership match including installation/tracking config and destination. Do not repeat unchanged forbidden reads, broaden RBAC or inspect Secrets."
+    ],
+    "remediation_risk_approval": "Propose evidence-based request sizing or at least4 cores unrequested on an eligible node through verified owning source.20% snapshot alone cannot justify lowering requests. Exact source/target/auto-sync and capacity details are missing; all changes/scaling/sync/pod actions require specific approval, none executed. Risks: cost, contention/overload, eviction and constraint violations. Preserve prior sizing/capacity; rollback may return p toPending.",
+    "verification": "After approved correction, confirm intended UID/replacement schedules, Insufficient cpu clears, readiness/request success and headroom at representative load across multiple observation/scaling cycles. Synced is insufficient to verify scheduler recovery.",
+    "limitations": "Offline synthetic evidence only. Exact context/node identities/UID/owner, full scheduler events, resource history/peaks, autoscaler policy, UTC interval, source and impact unavailable. Application visibility denied; no live reads or recovery."
+  }
+]

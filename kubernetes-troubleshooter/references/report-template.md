@@ -10,6 +10,9 @@ Affected requests/users/services/nodes, comparison cohort, severity basis or unk
 ## Findings
 Facts with E IDs, exact source/command/query, timestamps, object UIDs and scope.
 Separate logs/events/config observations from interpretations; redact sensitive data.
+When Argo/source evidence is relevant, record the management/relevance decision,
+control-plane versus destination identity, ordered desired/applied source revisions
+and local checkout differences. State when Argo was checked and found unrelated.
 
 ## Metrics analysis
 Backend and approved query route; available/missing names/labels; exact PromQL,
