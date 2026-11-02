@@ -1,0 +1,207 @@
+[
+  {
+    "id": 101,
+    "assessment": "High confidence availability loss, not HPA scale-down. Cache waits explain readiness loss; credit exhaustion is a strongly supported bottleneck. Failover is recovery evidence, not by itself the initiating cause. Human experimentation is unestablished.",
+    "evidence": [
+      "E1: desired/spec/current 8, Ready 1\u21926 during 13:54\u201314:09 UTC; no rollout.",
+      "E2: cache readiness timeouts/thread waits, CPU .05 core, stable RSS, no recorded OOM/eviction.",
+      "E3: credits 0, baseline CPU and growing latency precede 13:54; provider failover 14:06 precedes recovery; ResourceName audit lookup completeness unknown."
+    ],
+    "alternatives": [
+      "Hot commands or connection saturation could explain demand exceeding baseline capacity.",
+      "Human/pipeline writes remain unexcluded; no matching audit result is not proof of absence."
+    ],
+    "next_discriminating_checks": [
+      "Proposed: align per-cache-node engine CPU/credits and command latency against app timeouts before 13:54 through after 14:06, separating sustained credit starvation from failover interruption.",
+      "Inspect retained write events with verified resource/account/region/window/filter coverage and pipeline revisions to distinguish automatic provider action from configuration changes."
+    ],
+    "recommendation_and_risks": "Propose workload optimization or sustained non-burstable cache capacity via owning IaC after sizing/cost review. Adding app replicas could amplify load. Resizing may fail over; preserve previous class/revision and reviewed recovery plan. Explicit approval needed for execution; none performed.",
+    "verification": "Through a full working week at comparable demand: stable cache headroom, app latency/readiness and no recurrent failover. Ready 6 is partial recovery, not complete recovery.",
+    "limitations": "Synthetic offline prod-eu/platform evidence; no live reads/changes. Exact queries, resource identities, audit coverage and cost absent."
+  },
+  {
+    "id": 102,
+    "assessment": "Strongly supported chain: oversized disk requests prevent existing-node fit and force a 64-vCPU shape whose launch exceeds quota. A separate family/zone capacity shortage is also observed.",
+    "evidence": [
+      "E1: Insufficient ephemeral-storage; app requests disk 20Gi/memory 16Gi; comparable total usage p95 disk 2Gi/p99 memory 3.3Gi includes helper/services/logs/emptyDir.",
+      "E2: Launched=False/VcpuLimitExceeded; regional family usage 1380/1400 leaves 20 vCPU, less than launch 64; separate InsufficientInstanceCapacity.",
+      "E3: retained allocatable/fit report attributes shape to disk; CPU/memory CI overrides supported, ephemeral-storage override unsupported; no tag/image errors."
+    ],
+    "alternatives": [
+      "Request correction may still leave genuine family/zone shortage.",
+      "Heavy job outliers can require larger requests than supplied percentiles."
+    ],
+    "next_discriminating_checks": [
+      "Proposed: recompute retained eligible-shape fit with candidate requests and all overhead; establish whether smaller launch fits 20-vCPU remaining quota.",
+      "Segment total peaks by job type/duration and verify runner-level disk request control before selecting safe headroom.",
+      "Align launch failures with allowed families/zones to distinguish quota-wide blocking from isolated capacity shortage."
+    ],
+    "recommendation_and_risks": "Propose runner-source disk/memory right-sizing with controlled pilot and prior-config rollback; CPU/memory CI overrides can help those dimensions but cannot fix disk. Consider eligible capacity diversity and quota buffer separately. Lower requests risk evictions; broader capacity costs more. No action executed.",
+    "verification": "Representative/heavy-job pilot then working week: Pending/start latency, shapes, launched vCPU and quota/capacity failures improve without increased evictions.",
+    "limitations": "Synthetic offline evidence; usage windows/extremes and exact safe request values absent. No external reads or changes."
+  },
+  {
+    "id": 103,
+    "assessment": "High confidence memory-pressure eviction/replacement/provisioning/consolidation loop, not container restart churn or demonstrated HPA scale-up. Under-requested memory and disabled guard contribute; observed probe/HPA defects have unquantified impact.",
+    "evidence": [
+      "E1: pod UIDs last 20 minutes, zero restarts; memory evictions and MemoryPressure with demand exceeding memory; unchanged desired count, Pending replacements trigger claims later consolidated.",
+      "E2: request 4Gi versus 7-day p95 working set 5.6Gi/RSS 5.2Gi; disabled guard; one replica fits after overhead; probe/HPA rendered fields differ from intent.",
+      "E3: separate storage workload cache-heavy/modest RSS, no current pressure/OOM, reclaimability unmeasured."
+    ],
+    "alternatives": [
+      "Bursts and colocated workloads can deepen pressure beyond the measured percentiles.",
+      "Probe and consolidation behavior may independently worsen latency; cache presence proves neither safety nor exhaustion."
+    ],
+    "next_discriminating_checks": [
+      "Proposed: align per-node peak RSS/working set, colocated demand and allocatable/overhead with evictions to size beyond p95.",
+      "Compare retained intended/rendered probe and HPA fields plus ownership to identify exact source defects.",
+      "For storage, inspect retained reclaimability/cgroup pressure and peak RSS before declaring future risk."
+    ],
+    "recommendation_and_risks": "Propose measured requests/limits and guard below limit, suitable shapes fitting multiple replicas with overhead, and source wiring fixes; review topology/PDBs. PDBs do not prevent pressure eviction. Larger requests cost capacity and guard/probe changes can disrupt service. Preserve revisions for reviewed rollback; no execution.",
+    "verification": "At comparable load for a working week: no memory evictions/OOMs, longer pod lives, fewer NodeClaims/day, stable latency and tracked cost; assess storage separately.",
+    "limitations": "Synthetic offline evidence. Percentiles are not safety ceilings; exact sizing and individual defect effects unresolved. No live reads/changes."
+  },
+  {
+    "id": 104,
+    "assessment": "Correction: retract the prior claim that cap is reached only during incidents. Fresh samples show desired 8 about 8 hours each weekday; the 14-day mean 4.4 hid this. Max 12 is not yet justified: node contention and dependency waits need discrimination.",
+    "evidence": [
+      "E1: aggregate mean-based claim contradicted by user and E2.",
+      "E2: working-hour desired 8/ScalingLimited=True; CPU 1.5 cores/request 1.5 = 100% versus actual HPA target 80%; thread busy p50 4%/p90 33%.",
+      "E3: busiest hosting-node CPU p90 98%, 4 replicas/node; no container limit, ancestor quota/fresh throttling unknown; peak dependency waits."
+    ],
+    "alternatives": [
+      "Node contention or CPU outside measured thread-busy signal can pin CPU-based HPA.",
+      "Dependency blocking may constrain throughput; no container limit does not exclude ancestor quota.",
+      "More replicas on fresh nodes may help real CPU demand, while more colocated replicas may not."
+    ],
+    "next_discriminating_checks": [
+      "Proposed: align busiest/healthy-node run queues, per-pod CPU, ancestor quota/throttle rates and request latency/queues at cap.",
+      "Inspect peak DB/cache/pool headroom and calculate total connection budget at 12 replicas.",
+      "Verify concurrency metric semantics and HPA raw recommendation/coverage before request or target changes."
+    ],
+    "recommendation_and_risks": "Defer blanket max=12; select measured spread/capacity, request/target correction or bounded replica increase after finding first bottleneck and connection budget. Inflating requests can hide utilization while changing bin-packing. Extra nodes cost money; extra pools can overload dependencies. Approved source canary with prior-config rollback only; no execution.",
+    "verification": "Several matched weekdays: compare time at cap, busiest-node CPU, p95/errors, pod queues and pool waits. Roll back proposed change if waits/errors worsen.",
+    "limitations": "Synthetic offline evidence; concurrency denominator, latency impact, fresh quota/throttling and capacity/cost budgets incomplete. No live reads/changes."
+  },
+  {
+    "id": 105,
+    "assessment": "Strong evidence for future-valid served certificate published by CI applying an old module revision. Verified time disfavors skew. CI service principal is publication actor, not proof of a particular human or intent. Binary regression unsupported.",
+    "evidence": [
+      "E1: approved time comparison finds no client skew; public served NotBefore exceeds failing job time.",
+      "E2: audit publication at T identifies CI principal; pipeline old revision references exact served fingerprint, newer revision intended fingerprint.",
+      "E3: trust-source history uninspected; rollback compatibility unknown."
+    ],
+    "alternatives": [
+      "Tool-specific trust-source selection/update could add another failure path.",
+      "Exact chain member causing signer error should still be matched to served fingerprint."
+    ],
+    "next_discriminating_checks": [
+      "Proposed: match failing signer chain/fingerprint/NotBefore and trust-source version against public metadata and apply time.",
+      "Inspect retained trust-source updates and intended certificate validity/chain compatibility before choosing correction or rollback."
+    ],
+    "recommendation_and_risks": "Propose owning-source correction to intended valid certificate/module and stale-branch apply prevention. Preserve prior revision/public metadata; establish rotation/rollback compatibility. Trust changes may break clients; do not bypass validity/TLS or retrieve keys/Secrets. No execution.",
+    "verification": "After approved correction, original signer validates intended chain/fingerprint; subsequent pipeline/controller cycles do not republish old certificate.",
+    "limitations": "Synthetic offline; exact failing chain, trust source and safe rollback unverified. No credential/network/live reads or changes."
+  },
+  {
+    "id": 106,
+    "assessment": "Same-request ingress queue is a demonstrated large contributor. Processing phase alone does not establish backend execution time or exclude response transit. High node CPU supports contention but does not yet prove it causes ingress queueing.",
+    "evidence": [
+      "E1: target total 2.4s, DNS .01/connect .02/TLS .03/processing 2.2s; phase/version verified.",
+      "E2: same-request ingress queue 1.6s/backend compute .3s; busiest queue 80 versus fleet mean 10 at weekday peak; node CPU high; transit incomplete.",
+      "E3: busiest-cohort errors elevated; no approved change, fresh exact requests/limits or histogram buckets."
+    ],
+    "alternatives": [
+      "Ingress worker/concurrency limit, skewed routing or node contention.",
+      "Uninstrumented transit or trace gaps explain remaining time; backend-only diagnosis is incomplete."
+    ],
+    "next_discriminating_checks": [
+      "Proposed: align ingress occupancy, route distribution and queues on busiest versus healthy pods/nodes for same requests.",
+      "Inspect exact constraints plus fresh run-queue/CPU/throttling rates to distinguish node contention from ingress concurrency limit.",
+      "Match client/server response timestamps to bound transit; obtain correctly labeled buckets before asserting p95."
+    ],
+    "recommendation_and_risks": "Propose routing/spread or capacity canary only after resolving queue cause and reviewing exact config. Extra capacity costs and may overload dependencies; routing changes can raise errors. Preserve owning-source config and rollback trigger. No approved change or execution.",
+    "verification": "At matched weekday peak, total/phase latency, busiest queues and errors improve through multiple cycles; calculate quantiles only from valid histogram evidence.",
+    "limitations": "Synthetic offline single-target/trace evidence; alert-average window/denominator, full critical path and histograms missing. No live reads/changes."
+  },
+  {
+    "id": 107,
+    "assessment": "Combined changes show provisional improvement, not isolated proof for cache resize or upgrade. DB resize coincided and only one comparable post-change day exists.",
+    "evidence": [
+      "E1: matched 09\u201317 Europe/Tallinn work hours (07\u201315 UTC in November): probe average .56\u2192.26s, .30s/53.6% reduction; app request p95 1.28\u2192.49s, .79s/61.7% reduction; matched RPS/mix, fresh coverage. Probe average and app p95 are distinct measures.",
+      "E2: cache/DB/app changes simultaneous, no separating control, one post-day.",
+      "E3: queues/pool waits lower; longer validation and cost absent."
+    ],
+    "alternatives": [
+      "Any combination of app/cache/DB changes may explain benefit.",
+      "Unmeasured workload complexity, warmness and day variation remain despite matched RPS/mix."
+    ],
+    "next_discriminating_checks": [
+      "Proposed: repeat same aggregations/cohorts across further matched working days with errors, saturation and pool waits.",
+      "Use retained component timing/headroom or independently planned future canaries to separate effects; do not undo production merely to demonstrate cause.",
+      "Obtain operating-cost delta to assess benefit versus spend."
+    ],
+    "recommendation_and_risks": "Monitor combined benefit for full working week before concluding durable success. Further simultaneous changes confound attribution; any rollback needs app/schema and instance-change compatibility review. No action executed.",
+    "verification": "Repeated comparable local work windows retain improved probe average, app p95, queues/waits/errors without new saturation/failover; assess cost and regressions.",
+    "limitations": "Synthetic offline summaries lack dated sample windows/control. 'Yesterday' and matched-weekday characterization cannot be calendar-validated. Guidance gap: explicit handling of ambiguous day chronology is absent; treat supplied comparison as provisional. No live reads/changes."
+  },
+  {
+    "id": 108,
+    "assessment": "DB active memory pressure/swapping precedes slow transactions and pooler growth. More server connections is likely consequence and possible feedback amplifier, not established initiating cause. Trigger of memory growth unresolved.",
+    "evidence": [
+      "E1: 12:00 freeable memory falls, active swap/query latency rise; 12:03 transaction-mode server-in-use 80\u2192160 within 200 cap; clients flat 500; waits later; failover 12:10.",
+      "E2: no deploy/RPS rise; hold time follows query duration; DB session memory rises; pre-12:00 query mix incomplete.",
+      "E3: provider event confirms failover only; replicas would add pools."
+    ],
+    "alternatives": [
+      "Changed queries, longer transactions, session-memory settings or background DB work despite flat RPS.",
+      "Growing connection/session memory can reinforce pressure; ordering does not isolate all feedback causes."
+    ],
+    "next_discriminating_checks": [
+      "Proposed: align retained pre-12:00 query fingerprints/duration, active transactions and session memory to identify what precedes memory decline.",
+      "Compare DB background-work/I/O and transaction hold versus query time, distinguishing execution from idle transactions/storage stalls.",
+      "Compute aggregate pool budget against DB memory/connection headroom before changing caps."
+    ],
+    "recommendation_and_risks": "Propose demonstrated query/transaction optimization and measured DB memory sizing; review pool cap/backpressure within aggregate budget. Avoid default app scaling or pool-limit increase. Tighter pools may worsen waits, resizing may fail over/cost more; preserve prior source and reviewed recovery plan. No execution.",
+    "verification": "Representative peaks/full working week: no active swap, stable headroom/transaction duration, lower pool waits/errors and no recurrent failover.",
+    "limitations": "Synthetic offline; pre-onset query/workload history incomplete, provider failover not initiating-cause proof. No live reads/changes."
+  },
+  {
+    "id": 109,
+    "assessment": "No. Authorized empty NodeClaim list at 09:10 establishes only no current visible claims, not that no instance fits. 09:00 scheduling failure is historical and controller state unknown.",
+    "evidence": [
+      "E1: list access allowed, no claims at 09:10.",
+      "E2: logs unavailable, last FailedScheduling 09:00; failed/deleted claims, pool limits and controller health unchecked."
+    ],
+    "alternatives": [
+      "Controller health/permissions problem; user list permission does not establish controller permission.",
+      "Pool constraints/limits, deleted failed claims, provider quota/capacity failure or no current scale-triggering demand."
+    ],
+    "next_discriminating_checks": [
+      "Proposed: obtain retained controller conditions/events and current scoped Pending reason to distinguish no attempt from failed/deleted attempt; do not repeat unavailable logs unchanged.",
+      "Inspect retained pool limit/usage and eligible request/overhead fit; use failed-attempt launch/deletion reason before selecting provider versus fit explanation."
+    ],
+    "recommendation_and_risks": "Keep cause unresolved; restore diagnostic visibility or propose specific demonstrated controller/pool/provider correction after approval. Empty snapshot alone does not justify quota/pool expansion with cost/disruption risk. No execution.",
+    "verification": "Following approved targeted correction, verify reconciliation, appropriate claim lifecycle, Ready node and pod scheduling over multiple cycles; empty claims alone is not success.",
+    "limitations": "Synthetic offline; ten-minute-separated snapshots, controller history absent and target identity unspecified. No external reads/changes."
+  },
+  {
+    "id": 110,
+    "assessment": "Cache failover is unsupported as cause. Desired 8/Ready 1 is availability loss explained by seven revision-b startup OOM terminations. Revision-linked memory regression strongly supported; exact allocation cause and container versus node OOM remain unresolved. OOM does not establish leak.",
+    "evidence": [
+      "E1: desired/spec 8, Ready 1 at 09:00; seven OOMKilled at startup after b; a healthy on same node.",
+      "E2: fresh cache stable; yesterday's failover outside incident; previous logs allocation error before exit."
+    ],
+    "alternatives": [
+      "Revision-b image/config startup allocation, reduced limit or guard change.",
+      "Node-level OOM pending runtime/cgroup evidence, though same-node healthy a weakens generic node-failure attribution."
+    ],
+    "next_discriminating_checks": [
+      "Proposed: compare a/b effective non-secret memory limits, guard and image/config; pair runtime/cgroup OOM records with startup RSS/heap peaks to distinguish changed allocation/limit from node OOM.",
+      "Match previous-log allocation timestamps and owner UIDs to startup stage; verify schema/data compatibility of a before rollback."
+    ],
+    "recommendation_and_risks": "If an earlier cache-cause inference was made, retract it: these observations support revision-b startup OOM, not historical unrelated failover. Propose compatible known-good rollback or narrow allocation/config fix after review. Raising limits without node fit risks pressure. Preserve b evidence/source state; no cache change indicated and no action executed.",
+    "verification": "After approved fix, all 8 Ready with no new OOM/restart growth through startup and representative load/GC cycles, healthy node headroom/errors.",
+    "limitations": "Synthetic offline; OOM domain, allocation cause, actual limits and rollback compatibility missing. No live reads/changes."
+  }
+]

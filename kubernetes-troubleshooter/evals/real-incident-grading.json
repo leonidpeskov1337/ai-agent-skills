@@ -1,0 +1,237 @@
+{
+  "grader": "Parent manual review of independent offline reports against prewritten assertions",
+  "cases": [
+    {
+      "id": 101,
+      "expectations": [
+        {
+          "text": "Compare HPA desired with deployment available before blaming scaling",
+          "passed": true,
+          "evidence": "High confidence availability loss, not HPA scale-down. Cache waits explain readiness loss; credit exhaustion is a strongly supported bottleneck. Failover is recovery evidence, not by itself the initiating cause. Human experimentation is unestablished."
+        },
+        {
+          "text": "Check dependency provider metrics and events and the audit trail",
+          "passed": true,
+          "evidence": "Proposed: align per-cache-node engine CPU/credits and command latency against app timeouts before 13:54 through after 14:06, separating sustained credit starvation from failover interruption. Inspect retained write events with verified resource/account/region/window/filter coverage and pipeline revisions to distinguish automatic provider action from configuration changes."
+        },
+        {
+          "text": "Do not recommend more replicas while the dependency is saturated",
+          "passed": true,
+          "evidence": "Propose workload optimization or sustained non-burstable cache capacity via owning IaC after sizing/cost review. Adding app replicas could amplify load. Resizing may fail over; preserve previous class/revision and reviewed recovery plan. Explicit approval needed for execution; none performed."
+        }
+      ],
+      "summary": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "id": 102,
+      "expectations": [
+        {
+          "text": "Inspect ephemeral-storage requests, not only cpu and memory",
+          "passed": true,
+          "evidence": "E1: Insufficient ephemeral-storage; app requests disk 20Gi/memory 16Gi; comparable total usage p95 disk 2Gi/p99 memory 3.3Gi includes helper/services/logs/emptyDir. E2: Launched=False/VcpuLimitExceeded; regional family usage 1380/1400 leaves 20 vCPU, less than launch 64; separate InsufficientInstanceCapacity. E3: retained allocatable/fit report attributes shape to disk; CPU/memory CI overrides supported, ephemeral-storage override unsupported; no tag/image errors."
+        },
+        {
+          "text": "Identify VcpuLimitExceeded or equivalent provider error",
+          "passed": true,
+          "evidence": "E1: Insufficient ephemeral-storage; app requests disk 20Gi/memory 16Gi; comparable total usage p95 disk 2Gi/p99 memory 3.3Gi includes helper/services/logs/emptyDir. E2: Launched=False/VcpuLimitExceeded; regional family usage 1380/1400 leaves 20 vCPU, less than launch 64; separate InsufficientInstanceCapacity. E3: retained allocatable/fit report attributes shape to disk; CPU/memory CI overrides supported, ephemeral-storage override unsupported; no tag/image errors."
+        },
+        {
+          "text": "Evaluate quota headroom alongside request-shape and capacity fixes; do not treat a quota increase alone as the proven fix",
+          "passed": true,
+          "evidence": "Propose runner-source disk/memory right-sizing with controlled pilot and prior-config rollback; CPU/memory CI overrides can help those dimensions but cannot fix disk. Consider eligible capacity diversity and quota buffer separately. Lower requests risk evictions; broader capacity costs more. No action executed."
+        }
+      ],
+      "summary": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "id": 103,
+      "expectations": [
+        {
+          "text": "Compare memory request with p95 working set and RSS",
+          "passed": true,
+          "evidence": "E1: pod UIDs last 20 minutes, zero restarts; memory evictions and MemoryPressure with demand exceeding memory; unchanged desired count, Pending replacements trigger claims later consolidated. E2: request 4Gi versus 7-day p95 working set 5.6Gi/RSS 5.2Gi; disabled guard; one replica fits after overhead; probe/HPA rendered fields differ from intent. E3: separate storage workload cache-heavy/modest RSS, no current pressure/OOM, reclaimability unmeasured."
+        },
+        {
+          "text": "Inspect rendered probes and HPA behavior rather than assuming values",
+          "passed": true,
+          "evidence": "Proposed: align per-node peak RSS/working set, colocated demand and allocatable/overhead with evictions to size beyond p95. Compare retained intended/rendered probe and HPA fields plus ownership to identify exact source defects. For storage, inspect retained reclaimability/cgroup pressure and peak RSS before declaring future risk."
+        },
+        {
+          "text": "Distinguish RSS/cache and actual pressure; do not call cache-heavy working set risk-free",
+          "passed": true,
+          "evidence": "Bursts and colocated workloads can deepen pressure beyond the measured percentiles. Probe and consolidation behavior may independently worsen latency; cache presence proves neither safety nor exhaustion."
+        }
+      ],
+      "summary": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "id": 104,
+      "expectations": [
+        {
+          "text": "Report working-hours behavior, not only a multi-day mean",
+          "passed": true,
+          "evidence": "E1: aggregate mean-based claim contradicted by user and E2. E2: working-hour desired 8/ScalingLimited=True; CPU 1.5 cores/request 1.5 = 100% versus actual HPA target 80%; thread busy p50 4%/p90 33%. E3: busiest hosting-node CPU p90 98%, 4 replicas/node; no container limit, ancestor quota/fresh throttling unknown; peak dependency waits."
+        },
+        {
+          "text": "Explain that HPA utilization is relative to the CPU request",
+          "passed": true,
+          "evidence": "E1: aggregate mean-based claim contradicted by user and E2. E2: working-hour desired 8/ScalingLimited=True; CPU 1.5 cores/request 1.5 = 100% versus actual HPA target 80%; thread busy p50 4%/p90 33%. E3: busiest hosting-node CPU p90 98%, 4 replicas/node; no container limit, ancestor quota/fresh throttling unknown; peak dependency waits."
+        },
+        {
+          "text": "If an earlier claim is contradicted, retract it explicitly",
+          "passed": true,
+          "evidence": "Correction: retract the prior claim that cap is reached only during incidents. Fresh samples show desired 8 about 8 hours each weekday; the 14-day mean 4.4 hid this. Max 12 is not yet justified: node contention and dependency waits need discrimination."
+        }
+      ],
+      "summary": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "id": 105,
+      "expectations": [
+        {
+          "text": "Build a timeline of applies and certificate publication",
+          "passed": true,
+          "evidence": "E1: approved time comparison finds no client skew; public served NotBefore exceeds failing job time. E2: audit publication at T identifies CI principal; pipeline old revision references exact served fingerprint, newer revision intended fingerprint. E3: trust-source history uninspected; rollback compatibility unknown."
+        },
+        {
+          "text": "Do not retrieve private keys or Secrets",
+          "passed": true,
+          "evidence": "Propose owning-source correction to intended valid certificate/module and stale-branch apply prevention. Preserve prior revision/public metadata; establish rotation/rollback compatibility. Trust changes may break clients; do not bypass validity/TLS or retrieve keys/Secrets. No execution."
+        }
+      ],
+      "summary": {
+        "passed": 2,
+        "failed": 0,
+        "total": 2,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "id": 106,
+      "expectations": [
+        {
+          "text": "Use probe phases to separate network/TLS from backend time",
+          "passed": true,
+          "evidence": "Same-request ingress queue is a demonstrated large contributor. Processing phase alone does not establish backend execution time or exclude response transit. High node CPU supports contention but does not yet prove it causes ingress queueing."
+        },
+        {
+          "text": "Look at the busiest pod's queue, not only the fleet mean",
+          "passed": true,
+          "evidence": "Proposed: align ingress occupancy, route distribution and queues on busiest versus healthy pods/nodes for same requests. Inspect exact constraints plus fresh run-queue/CPU/throttling rates to distinguish node contention from ingress concurrency limit. Match client/server response timestamps to bound transit; obtain correctly labeled buckets before asserting p95."
+        }
+      ],
+      "summary": {
+        "passed": 2,
+        "failed": 0,
+        "total": 2,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "id": 107,
+      "expectations": [
+        {
+          "text": "Compare equal weekday working-hour windows",
+          "passed": true,
+          "evidence": "E1: matched 09\u201317 Europe/Tallinn work hours (07\u201315 UTC in November): probe average .56\u2192.26s, .30s/53.6% reduction; app request p95 1.28\u2192.49s, .79s/61.7% reduction; matched RPS/mix, fresh coverage. Probe average and app p95 are distinct measures. E2: cache/DB/app changes simultaneous, no separating control, one post-day. E3: queues/pool waits lower; longer validation and cost absent."
+        },
+        {
+          "text": "Name confounders such as the simultaneous version upgrade",
+          "passed": true,
+          "evidence": "Combined changes show provisional improvement, not isolated proof for cache resize or upgrade. DB resize coincided and only one comparable post-change day exists."
+        }
+      ],
+      "summary": {
+        "passed": 2,
+        "failed": 0,
+        "total": 2,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "id": 108,
+      "expectations": [
+        {
+          "text": "Determine whether connections rose before or after latency",
+          "passed": true,
+          "evidence": "E1: 12:00 freeable memory falls, active swap/query latency rise; 12:03 transaction-mode server-in-use 80\u2192160 within 200 cap; clients flat 500; waits later; failover 12:10. E2: no deploy/RPS rise; hold time follows query duration; DB session memory rises; pre-12:00 query mix incomplete. E3: provider event confirms failover only; replicas would add pools."
+        },
+        {
+          "text": "Do not recommend adding application replicas without first evaluating the demonstrated dependency bottleneck and connection budget",
+          "passed": true,
+          "evidence": "Propose demonstrated query/transaction optimization and measured DB memory sizing; review pool cap/backpressure within aggregate budget. Avoid default app scaling or pool-limit increase. Tighter pools may worsen waits, resizing may fail over/cost more; preserve prior source and reviewed recovery plan. No execution."
+        }
+      ],
+      "summary": {
+        "passed": 2,
+        "failed": 0,
+        "total": 2,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "id": 109,
+      "expectations": [
+        {
+          "text": "Do not infer constraints exclude every type solely from absence of current claims",
+          "passed": true,
+          "evidence": "No. Authorized empty NodeClaim list at 09:10 establishes only no current visible claims, not that no instance fits. 09:00 scheduling failure is historical and controller state unknown."
+        },
+        {
+          "text": "Name controller/RBAC/pool limits/deleted claims as alternatives and request discriminating retained evidence",
+          "passed": true,
+          "evidence": "Controller health/permissions problem; user list permission does not establish controller permission. Pool constraints/limits, deleted failed claims, provider quota/capacity failure or no current scale-triggering demand."
+        }
+      ],
+      "summary": {
+        "passed": 2,
+        "failed": 0,
+        "total": 2,
+        "pass_rate": 1.0
+      }
+    },
+    {
+      "id": 110,
+      "expectations": [
+        {
+          "text": "Prioritize observed startup OOM/rollout evidence instead of assuming dependency waits from desired/Ready counts",
+          "passed": true,
+          "evidence": "Cache failover is unsupported as cause. Desired 8/Ready 1 is availability loss explained by seven revision-b startup OOM terminations. Revision-linked memory regression strongly supported; exact allocation cause and container versus node OOM remain unresolved. OOM does not establish leak."
+        },
+        {
+          "text": "Keep underlying allocation-change cause uncertain and do not blame unrelated provider event",
+          "passed": true,
+          "evidence": "Cache failover is unsupported as cause. Desired 8/Ready 1 is availability loss explained by seven revision-b startup OOM terminations. Revision-linked memory regression strongly supported; exact allocation cause and container versus node OOM remain unresolved. OOM does not establish leak."
+        }
+      ],
+      "summary": {
+        "passed": 2,
+        "failed": 0,
+        "total": 2,
+        "pass_rate": 1.0
+      }
+    }
+  ],
+  "limits": "One batched with-skill run, no fresh baseline, no live access or actual credential use. Source production cases are supplied summaries, replays are synthetic.",
+  "guidance_gap": "Evaluator flagged unspecified before/after calendar dates; metrics guidance now explicitly requires resolving relative dates and checking weekday/holiday/sample coverage."
+}

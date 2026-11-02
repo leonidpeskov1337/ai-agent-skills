@@ -33,6 +33,16 @@ node or provider logs require their own existing authorization.
 Metrics API/adapter missing vs request denominator vs stabilization/max vs trigger auth vs unschedulable replicas. Choose the cheapest discriminating next observation. Inspect both
 supporting and contradictory signals and compare an unaffected cohort.
 
+Production-proven discriminators:
+- Desired replicas unchanged while available/ready drops: readiness or dependency
+ failure is one possibility; also test crashes/OOM, evictions, rollout, Pending
+ replacements and node loss before following [managed dependencies](managed-dependencies.md).
+- Pinned at max with low application concurrency: utilization is relative to the
+ request; a small request keeps the HPA at max (see [capacity review](capacity-review.md)).
+- Oscillation: check `behavior` (stabilization, policies) in the projection, and
+ whether evictions feed replacements (see [churn loop](resource-churn-eviction-loop.md)).
+- Wiring: min/max from the wrong variable or unset max falling back to a chart default.
+
 ## Confirmation criteria
 Exact scale condition and metrics source establish blocked stage; desired replicas differs from Ready. Link conclusions to evidence IDs; if the required evidence is missing,
 report a ranked hypothesis and the next test, rather than a confirmed root cause.

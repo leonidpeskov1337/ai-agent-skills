@@ -32,6 +32,10 @@ node or provider logs require their own existing authorization.
 Container limit vs node OOM vs leak/cache/load spike; exit 137 alone is not proof. Choose the cheapest discriminating next observation. Inspect both
 supporting and contradictory signals and compare an unaffected cohort.
 
+Production-proven discriminators:
+- Application memory guard thresholds should sit below the container limit;
+ thresholds above the limit mean the kernel kills first.
+
 ## Confirmation criteria
 Explicit OOM record and cgroup limit/usage evidence at same time; distinguish node-wide pressure. Link conclusions to evidence IDs; if the required evidence is missing,
 report a ranked hypothesis and the next test, rather than a confirmed root cause.

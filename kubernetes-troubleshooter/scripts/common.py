@@ -121,15 +121,69 @@ def tracking_metadata(meta):
     return safe
 
 
+PLACEMENT_LABELS = ("node.kubernetes.io/instance-type", "topology.kubernetes.io/zone",
+                    "karpenter.sh/nodepool", "karpenter.sh/capacity-type",
+                    "eks.amazonaws.com/nodegroup")
+
+
+def project_karpenter(item):
+    meta = item.get("metadata", {})
+    spec = item.get("spec", {})
+    status = item.get("status", {})
+    safe = {"kind": item.get("kind"), "name": meta.get("name"), "uid": meta.get("uid"),
+            "created": meta.get("creationTimestamp"),
+            "deletion": meta.get("deletionTimestamp"),
+            "labels": {k: v for k, v in (meta.get("labels") or {}).items()
+                       if k in PLACEMENT_LABELS}}
+    if item.get("kind") == "NodePool":
+        template = spec.get("template", {}).get("spec", {})
+        safe.update({"disruption": spec.get("disruption"), "limits": spec.get("limits"),
+                     "weight": spec.get("weight"),
+                     "requirements": template.get("requirements"),
+                     "expireAfter": template.get("expireAfter"),
+                     "taints": template.get("taints")})
+        safe["status"] = {k: status[k] for k in ("resources", "conditions") if k in status}
+    else:
+        safe.update({"requirements": spec.get("requirements"),
+                     "resources": spec.get("resources")})
+        safe["status"] = {k: status[k] for k in (
+            "nodeName", "providerID", "capacity", "allocatable", "conditions") if k in status}
+    return redact_values(safe)
+
+
+def project_probe(probe):
+    """Keep timing and target shape, never exec commands or HTTP header values."""
+    safe = {key: probe[key] for key in (
+        "initialDelaySeconds", "periodSeconds", "timeoutSeconds", "successThreshold",
+        "failureThreshold", "terminationGracePeriodSeconds") if key in probe}
+    http = probe.get("httpGet")
+    if isinstance(http, dict):
+        safe["httpGet"] = {key: http[key] for key in ("port", "scheme") if key in http}
+        if isinstance(http.get("path"), str):
+            safe["httpGet"]["path"] = http["path"].split("?", 1)[0].split("#", 1)[0]
+        if http.get("httpHeaders"):
+            safe["httpGet"]["header_names"] = [header.get("name") for header in http["httpHeaders"]]
+    for kind, keys in (("tcpSocket", ("port",)), ("grpc", ("port", "service"))):
+        if isinstance(probe.get(kind), dict):
+            safe[kind] = {key: probe[kind][key] for key in keys if key in probe[kind]}
+    if "exec" in probe:
+        safe["exec"] = {"configured": True}
+    return safe
+
+
 def projection(item):
     """Whitelist fields; omit arbitrary annotations, env, Secret refs and config bodies."""
     if item.get("kind") in ("Application", "ApplicationSet"):
         return redact_values(project_argo(item) | tracking_metadata(item.get("metadata") or {}))
+    if item.get("kind") in ("NodeClaim", "NodePool"):
+        return project_karpenter(item)
     meta = item.get("metadata", {})
     spec = item.get("spec", {})
     workload = spec.get("jobTemplate", {}).get("spec", spec)
     template = workload.get("template", {}).get("spec", workload)
-    containers = [{k: c[k] for k in ("name", "image", "resources", "ports") if k in c}
+    containers = [{k: c[k] for k in ("name", "image", "resources", "ports") if k in c} |
+                  {key: project_probe(c[key]) for key in ("readinessProbe", "livenessProbe", "startupProbe")
+                   if isinstance(c.get(key), dict)}
                   for c in template.get("containers", [])]
     safe = {"kind": item.get("kind"), "name": meta.get("name"),
             "namespace": meta.get("namespace"), "uid": meta.get("uid"),
@@ -139,18 +193,29 @@ def projection(item):
     safe["initContainers"] = [
         {k: c[k] for k in ("name", "image", "resources", "restartPolicy") if k in c}
         for c in template.get("initContainers", [])]
-    if "overhead" in template:
-        safe["overhead"] = template["overhead"]
+    for key in ("overhead", "affinity", "topologySpreadConstraints", "nodeSelector",
+                "tolerations", "priorityClassName", "terminationGracePeriodSeconds"):
+        if key in template:
+            safe[key] = template[key]
+    labels = meta.get("labels") or {}
+    if item.get("kind") == "Node":
+        safe["placement"] = {k: labels[k] for k in PLACEMENT_LABELS if k in labels}
+    safe["deletion"] = meta.get("deletionTimestamp")
     for key in ("nodeName", "replicas", "selector", "type", "clusterIP", "ports",
-                "providerID", "taints", "storageClassName", "volumeName",
-                "accessModes", "resources", "scaleTargetRef", "minReplicas", "maxReplicas"):
+                "providerID", "taints", "unschedulable", "storageClassName", "volumeName",
+                "accessModes", "resources", "scaleTargetRef", "minReplicas", "maxReplicas",
+                "metrics", "behavior", "minAvailable", "maxUnavailable",
+                "unhealthyPodEvictionPolicy", "strategy"):
         if key in spec:
             safe[key] = spec[key]
     status = item.get("status", {})
     safe["status"] = {k: status[k] for k in (
         "phase", "conditions", "containerStatuses", "initContainerStatuses",
         "allocatable", "capacity", "nodeInfo", "readyReplicas", "availableReplicas",
-        "currentReplicas", "desiredReplicas", "currentMetrics") if k in status}
+        "currentReplicas", "desiredReplicas", "currentMetrics", "lastScaleTime",
+        "updatedReplicas", "unavailableReplicas", "startTime", "qosClass",
+        "disruptionsAllowed", "currentHealthy", "desiredHealthy", "expectedPods",
+        "reason", "message") if k in status}
     if item.get("kind") == "Event":
         for key in ("reason", "message", "type", "firstTimestamp", "lastTimestamp",
                     "eventTime", "count", "involvedObject"):
@@ -167,7 +232,8 @@ RESOURCES = {"pods", "deployments", "statefulsets", "daemonsets", "replicasets",
              "horizontalpodautoscalers", "ingresses", "networkpolicies",
              "gateways.gateway.networking.k8s.io", "httproutes.gateway.networking.k8s.io",
              "servicemonitors.monitoring.coreos.com", "podmonitors.monitoring.coreos.com",
-             "applications.argoproj.io", "applicationsets.argoproj.io"}
+             "applications.argoproj.io", "applicationsets.argoproj.io",
+             "poddisruptionbudgets", "nodeclaims.karpenter.sh", "nodepools.karpenter.sh"}
 
 
 def get_resources(context, namespace, resource, selector=None, name=None, field_selector=None):

@@ -51,3 +51,39 @@ Inspect labels and scrape topology using raw scoped samples before aggregation.
 Check `timestamp(metric)` vs evaluation time, `up` for known scrape jobs, data gaps,
 query warnings/infos, retention and delayed ingestion. `up` itself may be absent or
 stale. An API success with an empty vector is not evidence of health.
+
+## Collector allowlists and chart-native monitors
+
+Collectors such as Alloy/OTel/agent often relabel with `keep` on `__name__`.
+A metric visible in `/api/v1/label/__name__/values` can still return no recent
+samples if it was ingested once, then dropped. Inspect raw sample timestamps,
+`timestamp(metric)` and scrape coverage; `last_over_time` returns a value, not its
+original sample age. Where supported, `ts_of_last_over_time` can expose that age.
+Read the collector's relabel rules (non-sensitive fields only) before
+concluding an exporter is broken.
+
+Prefer chart-native ServiceMonitor/PodMonitor toggles over hand-written scrape
+jobs. Before an approved change, inspect existing rendered evidence or separately
+approved rendering and confirm the monitor object exists:
+charts often require a parent toggle (for example a Service) and silently drop
+misnested keys. After enabling, confirm the collector's monitor selector matches
+the new object's labels and that series arrive.
+
+Some application exporters expose probe groups on separate paths; a combined
+`/metrics` path can run database probes on every scrape. Propose an approved change
+to scrape only the needed
+path (for example a queue-only path) when the backend is under pressure.
+
+## Cloud provider telemetry for managed dependencies
+
+Provider metrics can expose managed cache/database/load-balancer saturation
+missing from Kubernetes telemetry; application/exporter metrics may also observe it. With an approved read-only profile, query per-node statistics at 1-5
+minute periods across the incident and an equal baseline window. Typical signals:
+
+| Dependency | Signals that decide incidents |
+|---|---|
+| Cache (Redis/Valkey/Memcached) | CPU and engine CPU, burst credit balance, memory %, swap, current connections, evictions, replication lag, failover events |
+| Relational DB | CPU, freeable memory, swap, read/write latency, connections, IOPS/throughput vs provisioned, credit/burst balance |
+| Connection pooler | Client vs server connections, waiting clients, max wait time |
+| Shared file storage | Latency per op, throughput vs burst credits, IO limit % |
+| Account quotas | Running on-demand vCPU vs quota, IP/ENI availability |

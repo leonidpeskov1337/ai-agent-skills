@@ -33,6 +33,14 @@ node or provider logs require their own existing authorization.
 Unscheduled vs scheduled but waiting for volume/image/init; capacity vs constraints. Choose the cheapest discriminating next observation. Inspect both
 supporting and contradictory signals and compare an unaffected cohort.
 
+Production-proven discriminators:
+- Check `Insufficient ephemeral-storage` alongside CPU/memory for CI job pods.
+- Runner-reported "timed out waiting for pod to start" with provisioner quota
+ errors: see [CI runner jobs](ci-runner-jobs.md).
+- A CI job queued without any corresponding pod may have no runner accepting its
+ tags. An existing Pending pod without retained scheduler events remains a
+ Kubernetes investigation; missing events do not establish a tag mismatch.
+
 ## Confirmation criteria
 PodScheduled condition and exact event identify the stage; test matching constraints. Link conclusions to evidence IDs; if the required evidence is missing,
 report a ranked hypothesis and the next test, rather than a confirmed root cause.

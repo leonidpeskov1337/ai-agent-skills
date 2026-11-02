@@ -41,3 +41,14 @@ Relevant alerting, rollout checks, capacity or application improvements.
 ## Investigation limitations
 Access denials, retention gaps, missing telemetry, incomplete scope, stale samples,
 query truncation, untested hypotheses, budget consumed and required follow-up.
+
+## Condensed format (short-answer, standup or chat)
+
+Use when the user asks for a message, not a report. 5-8 numbered points, each one
+fact with its number, window and source; then a one-line decision and the
+re-check condition. Keep corrections visible ("Correction: ..."). Example shape:
+
+1. Desired replicas stayed at 8 from 13:54 to 14:09 UTC; available dropped to 1 (E3, E4).
+2. Pods were NotReady with CPU about 5%; thread/trace evidence located cache waits (E6).
+3. Cache node had 0 burst credits; provider failed over at 14:06 (E7, E8).
+Decision: resize the cache first; re-check scaling in 1-2 weeks.

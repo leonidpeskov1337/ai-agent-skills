@@ -33,6 +33,12 @@ node or provider logs require their own existing authorization.
 Memory vs disk bytes vs inode vs PID vs ephemeral storage requests. Choose the cheapest discriminating next observation. Inspect both
 supporting and contradictory signals and compare an unaffected cohort.
 
+Production-proven discriminators:
+- Evictions with memory request below representative usage suggest under-reservation;
+ verify aggregate node demand and actual pressure. With a workload controller,
+ HPA and a provisioner, test whether this contributes to a churn loop
+ (see [churn loop](resource-churn-eviction-loop.md)).
+
 ## Confirmation criteria
 Pressure transition and threshold breach match eviction timestamps and implicated resource. Link conclusions to evidence IDs; if the required evidence is missing,
 report a ranked hypothesis and the next test, rather than a confirmed root cause.

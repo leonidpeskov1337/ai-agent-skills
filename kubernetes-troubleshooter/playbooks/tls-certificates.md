@@ -33,6 +33,14 @@ node or provider logs require their own existing authorization.
 Expiry vs SAN/SNI mismatch vs trust chain vs mTLS client identity vs clock skew. Choose the cheapest discriminating next observation. Inspect both
 supporting and contradictory signals and compare an unaffected cohort.
 
+Production-proven discriminators:
+- "not yet valid / current time X is before Y": either the client clock is wrong
+ or a certificate/trust bundle was replaced with a different one. Compare the
+ served NotBefore with the time of the last apply; an IaC apply from an old
+ module version can re-publish a stale certificate (see [change attribution](change-attribution.md)).
+- Signing/verification tools with their own trust roots (for example TUF roots)
+ fail even when web TLS is fine; check the tool's trust source and its update time.
+
 ## Confirmation criteria
 Public certificate issuer/SAN/validity or trust error matches client handshake path. Link conclusions to evidence IDs; if the required evidence is missing,
 report a ranked hypothesis and the next test, rather than a confirmed root cause.

@@ -32,6 +32,14 @@ node or provider logs require their own existing authorization.
 Leak vs cache warming vs traffic growth vs native allocation vs node pressure. Choose the cheapest discriminating next observation. Inspect both
 supporting and contradictory signals and compare an unaffected cohort.
 
+Production-proven discriminators:
+- High working set on I/O-heavy workloads may include active page cache; compare
+ RSS, reclaimability, cgroup events, limits and pressure. Absence of OOM/eviction
+ evidence does not prove safe headroom.
+- Per-worker growth bounded by an application memory guard (worker killer) that
+ is disabled by a chart default can contribute to node-pressure eviction or
+ container/node OOM depending on limits, growth and available capacity.
+
 ## Confirmation criteria
 Growth persists across comparable load and GC cycles; independent heap/native evidence needed for a confirmed leak. Link conclusions to evidence IDs; if the required evidence is missing,
 report a ranked hypothesis and the next test, rather than a confirmed root cause.

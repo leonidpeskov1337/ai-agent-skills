@@ -11,6 +11,8 @@ by the helper; no raw Secret or configuration dumps.
 python scripts/collect_evidence.py --context CONTEXT --namespace NS --resource pods
 python scripts/collect_evidence.py --context CONTEXT --namespace NS --resource nodes
 python scripts/collect_evidence.py --context CONTEXT --namespace NS --resource events
+python scripts/collect_evidence.py --context CONTEXT --namespace NS --resource nodeclaims.karpenter.sh
+python scripts/collect_evidence.py --context CONTEXT --namespace NS --resource nodepools.karpenter.sh
 ```
 For events, scope by involved object name/UID via `--field-selector` when known.
 
@@ -32,6 +34,16 @@ node or provider logs require their own existing authorization.
 ## Hypothesis branches
 Pool limits/constraints vs quota/capacity vs IP exhaustion vs daemon overhead vs not scale-triggering. Choose the cheapest discriminating next observation. Inspect both
 supporting and contradictory signals and compare an unaffected cohort.
+
+Production-proven discriminators:
+- Read NodeClaims (`--resource nodeclaims.karpenter.sh`): `Launched=False` with
+ `VcpuLimitExceeded` = account quota; `InsufficientInstanceCapacity` = family/zone
+ capacity. No current NodeClaim can also reflect controller/RBAC/pool-limit
+ problems or deleted failed claims; inspect logs/events before selecting a cause.
+- Launched vCPU near quota with low CPU use: oversized pod requests (often
+ ephemeral storage or memory) are choosing large instances (see [CI runner jobs](ci-runner-jobs.md)).
+- Daily NodeClaim churn: one pod per node or wrong consolidation mode
+ (see [churn loop](resource-churn-eviction-loop.md)).
 
 ## Confirmation criteria
 Controller reason and provider capacity/quota/constraint evidence match unschedulable pod. Link conclusions to evidence IDs; if the required evidence is missing,

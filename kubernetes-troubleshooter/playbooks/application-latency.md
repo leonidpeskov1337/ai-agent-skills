@@ -33,6 +33,18 @@ node or provider logs require their own existing authorization.
 CPU/throttling vs downstream latency vs queueing vs traffic mix vs deployment vs storage/network. Choose the cheapest discriminating next observation. Inspect both
 supporting and contradictory signals and compare an unaffected cohort.
 
+Production-proven discriminators:
+- Synthetic probe slow: split by phase; if DNS/connect/TLS are small and
+ processing is large, investigate the time to first response byte, including
+ request transmission, proxies, backend work and response transit. Traces or
+ server/network evidence are needed to locate the delay.
+- Working vs waiting: per-pod CPU low, worker/thread busy high and request queue
+ growing = blocked on a dependency (see [managed dependencies](managed-dependencies.md)).
+ CPU high on the busiest node with several replicas per node = node CPU contention.
+- Segment working hours vs off-hours and look at the busiest pod's queue, not the mean.
+- After a fix plus an upgrade on the same day, report the improvement as
+ confounded and provisional.
+
 ## Confirmation criteria
 Compare time windows/cohorts and critical path; require independent evidence beyond correlation. Link conclusions to evidence IDs; if the required evidence is missing,
 report a ranked hypothesis and the next test, rather than a confirmed root cause.

@@ -33,3 +33,22 @@ For linked GitOps sync/source/component symptoms, start with
 - [Resource quota and LimitRange failures](quota-limitrange.md): Admission rejects pods or rollout creates no pods.
 - [Webhook and admission failures](admission-webhooks.md): FailedCreate, admission timeout or rejected objects.
 - [GPU scheduling and utilization](gpu.md): GPU pod Pending or allocation/utilization failure.
+
+Production-derived playbooks (cross-cutting; start here when the symptom matches):
+
+- [Managed dependencies](managed-dependencies.md): Pods slow/NotReady with low CPU; cache/DB/pooler saturation, burst credits, failover.
+- [CI runner jobs](ci-runner-jobs.md): Job pods Pending/timeouts, runner tags, request shapes, account vCPU quota.
+- [Resource churn and eviction loops](resource-churn-eviction-loop.md): Short pod lifetimes, evictions, daily node churn, HPA oscillation.
+- [Change attribution](change-attribution.md): Unexpected change; who or what changed it.
+- [Capacity review](capacity-review.md): Proposals to raise max replicas, node limits or sizes.
+
+Quick routing for ambiguous symptoms:
+
+| Observation | Start with |
+|---|---|
+| Ready pods drop, HPA desired unchanged | Pod/controller availability; managed dependencies if timeout/wait evidence links them |
+| Pods short-lived, no restarts, evictions | Resource churn and eviction loops |
+| Jobs Pending, provisioner quota/capacity errors | CI runner jobs, then Karpenter |
+| "Not yet valid"/stale certificate after an apply | TLS, then change attribution |
+| HPA at max every working day | Capacity review |
+| Probe slow, processing phase dominates | Application latency |

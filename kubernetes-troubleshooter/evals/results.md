@@ -1,7 +1,7 @@
 # Validation and evaluation results
 
-The original build results below are retained for provenance. The prompt/Argo CD
-extension section at the end records the current 37-test suite and new scenarios.
+Earlier build results below are retained for provenance. The incident-pattern
+upgrade section at the end records the current 45-test suite and new scenarios.
 
 Executed 2026-10-31 on Windows, Python 3.14.7. No live cluster, production API or real
 credentials were used. Runtime helpers require only Python 3.10+ standard library;
@@ -107,3 +107,50 @@ is made; those require authorized host tools/adapters and real environment testi
 
 A static official-framework viewer is generated under the local untracked
 `kubernetes-troubleshooter-workspace/argocd/review.html` for optional human review.
+
+## Incident-pattern upgrade — 2026-11-02
+
+Applied all 27 file replacements/additions from the supplied ready-to-use upgrade,
+preserving unchanged transport behavior and existing Argo/prompt support. Added
+five playbooks (32 total), request modes, claim corrections, business-hour and
+busiest-unit comparisons, managed dependency/quota attribution, and expanded
+probe/HPA/PDB/placement/NodePool/NodeClaim evidence projection.
+
+Executed checks:
+
+- **45 helper tests passed**: the existing 37, six supplied capacity-projection
+  tests and two added regressions for probe credential exclusion and scoped
+  read-only collection. Only local mock HTTP networking was used.
+- Both official skill validators returned `Skill is valid!`.
+- All 32 playbooks are indexed; relative source/package links, evaluation JSON,
+  Python compilation and ZIP integrity passed. Prompt/Argo files were retained.
+- Existing transport, redaction, tracking and scoped-read function ASTs match
+  the previous commit; only the resource projection/allowlist was expanded.
+
+The suggestions were retained except for documented correctness/safety improvements:
+HPA versus workload-controller roles; availability versus scale-down; missing-claim
+and audit-search uncertainty; memory/cache/ancestor-quota semantics; complete pod
+ephemeral-storage accounting; blackbox time-to-first-byte interpretation; cache-node
+metric dimensions; safe plan/render handling; and filtering probe exec commands,
+HTTP header values and query values. Source provenance lists the official references.
+The source case summaries and reported outcomes were not independently verified.
+
+The supplied eight evaluation prompts lacked raw artifacts and some expected outputs
+assumed a diagnosis. Added explicitly synthetic replay inputs and made the expectations
+evidence-dependent. A fresh agent read only the skill/references and ten raw fixtures
+(eight supplied patterns plus two counterexamples), made no external/credential reads
+or changes, and produced [ten reports](real-incident-reports.json). Parent manual
+review found **24/24 assertions satisfied**; [grades contain report excerpts](real-incident-grading.json).
+The evaluator flagged missing calendar dates in a comparison scenario; guidance
+now explicitly resolves relative dates and checks actual weekday/holiday/coverage
+before declaring windows matched. This clarification followed the replay run.
+
+Inputs and rubric: [raw fixtures](real-incident-fixtures.json),
+[evaluation scenarios](real-incident-evals.json). The official static viewer is
+generated under local untracked
+`kubernetes-troubleshooter-workspace/production-upgrade/review.html`.
+
+Limits: one batched with-skill replay and parent grading, no new baseline or repeated
+model runs, no live cluster/cloud/provider integration, and no measured model
+latency/token-efficiency claims. Earlier build evaluations were not rerun; the full
+helper suite was. These results do not establish production incident success rate.

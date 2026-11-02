@@ -1,0 +1,184 @@
+[
+  {
+    "id": 101,
+    "prompt": "Web pods dropped from 8 to 1 and back to 6 in 15 minutes. Is someone experimenting in production?",
+    "scope": "Synthetic offline replay, not live or independently verified production evidence. Approved contextprod-eu/namespaceplatform; 2026-11-02 UTC unless another timezone is explicit. No external reads, credentials or changes.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "HPA desired stays8; Deployment spec replicas8, current8, Ready1->6 between13:54-14:09UTC; no rollout."
+      },
+      {
+        "id": "E2",
+        "observation": "Affected pods repeatedly fail readiness on cache read timeout; thread traces show cache waits; app CPU .05core, RSS stable, no OOM/eviction events."
+      },
+      {
+        "id": "E3",
+        "observation": "Approved cache-node metrics show CPUCreditBalance0, sustained baseline CPU and request latency growth before13:54; provider event records failover14:06; recovery follows. CloudTrail ResourceName lookup finds no matching human writes; completeness not established."
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "prompt": "CI jobs fail with 'timed out waiting for pod to start' across all projects.",
+    "scope": "Synthetic offline replay, not live or independently verified production evidence. Approved contextprod-eu/namespaceplatform; 2026-11-02 UTC unless another timezone is explicit. No external reads, credentials or changes.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "Scheduler events: Insufficient ephemeral-storage. Pending job pod requests: app20Gi ephemeral,16Gi memory; helper/services accounted. Retained total writable/log/emptyDir measurements p95ephemeral2Gi, p99memory3.3Gi across comparable jobs."
+      },
+      {
+        "id": "E2",
+        "observation": "NodeClaim Launched=False; controller/provider log VcpuLimitExceeded for64-vCPU launch. Account/region/family usage1380 versusquota1400 includes other clusters and VMs. One allowed family/zone also returns InsufficientInstanceCapacity."
+      },
+      {
+        "id": "E3",
+        "observation": "Retained eligible-node/allocatable and request fit report shows disk request chooses64-vCPU shape; CI overrides supportcpu/memory but not ephemeral-storage; no tagging or image errors."
+      }
+    ]
+  },
+  {
+    "id": 103,
+    "prompt": "Our Git platform is slow and the node pool creates hundreds of nodes a week.",
+    "scope": "Synthetic offline replay, not live or independently verified production evidence. Approved contextprod-eu/namespaceplatform; 2026-11-02 UTC unless another timezone is explicit. No external reads, credentials or changes.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "Pod UIDs last20minutes with zero container restarts; deletion/eviction events name memory; aggregate node demand exceeded available memory and node MemoryPressure=True at eviction times. ReplicaSet creates replacements at unchanged desired count; Pending replacements trigger new NodeClaims; later consolidation deletes them."
+      },
+      {
+        "id": "E2",
+        "observation": "Request4Gi, p95working set5.6Gi, p95RSS5.2Gi over7days; app memory guard disabled in effective non-secret config. NodePool shape fits one replica after overhead; rendered readiness periodSeconds incorrectly wired to intended delay; HPA behavior differs from chart intent."
+      },
+      {
+        "id": "E3",
+        "observation": "Separate storage workload high working set but modestRSS/cache-heavy; no current OOM/pressure; reclaimability unmeasured. No declared guarantee of future safety."
+      }
+    ]
+  },
+  {
+    "id": 104,
+    "prompt": "Colleagues want HPA max raised from 8 to 12 because it runs 8 replicas every day.",
+    "scope": "Synthetic offline replay, not live or independently verified production evidence. Approved contextprod-eu/namespaceplatform; 2026-11-02 UTC unless another timezone is explicit. No external reads, credentials or changes.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "Prior assistant claim: cap reached only during incidents, based on14daymean4.4 replicas. User reports cap8 every working day."
+      },
+      {
+        "id": "E2",
+        "observation": "Fresh comparable work-hour samples: desired8 for about8hours per weekday; app thread busyp50=4%,p90=33%, podCPU1.5cores againstrequest1.5; actualHPA targetCPU80%; atmaxScalingLimited=True."
+      },
+      {
+        "id": "E3",
+        "observation": "Busiest hosting nodeCPU p90=98% with4replicas/node; no container CPU limit, ancestorquota/fresh throttle rates not yet checked. Other nodes moderate; dependency pool waits rise during peaks. User proposes max12, no capacity or connection budget for it established."
+      }
+    ]
+  },
+  {
+    "id": 105,
+    "prompt": "Image signing fails: certificate is not yet valid, current time is before NotBefore.",
+    "scope": "Synthetic offline replay, not live or independently verified production evidence. Approved contextprod-eu/namespaceplatform; 2026-11-02 UTC unless another timezone is explicit. No external reads, credentials or changes.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "Signing client clock verified against approved time source, no skew; public served certificate NotBefore is later than failing job time. No private key or Secret read."
+      },
+      {
+        "id": "E2",
+        "observation": "Certificate publication metadata/audit event atT identifies CI service principal. Existing pipeline record atT applies old module revision that references exact served certificate fingerprint; newer revision contains intended fingerprint."
+      },
+      {
+        "id": "E3",
+        "observation": "No evidence of signing binary regression; tool trust-source update history available but not yet inspected; rollback compatibility unverified."
+      }
+    ]
+  },
+  {
+    "id": 106,
+    "prompt": "Blackbox probe latency alert: average probe duration above 2s.",
+    "scope": "Synthetic offline replay, not live or independently verified production evidence. Approved contextprod-eu/namespaceplatform; 2026-11-02 UTC unless another timezone is explicit. No external reads, credentials or changes.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "Blackbox totalduration2.4s; DNS.01s/connect.02s/TLS.03s/processing2.2s for affectedtarget; phase labels/version verified."
+      },
+      {
+        "id": "E2",
+        "observation": "Same request server trace shows ingress queue1.6s, backendcompute.3s; busiest pod queue80 vs fleetmean10 during weekdaypeak; hosting nodeCPUhigh; network response-transit instrumentation incomplete."
+      },
+      {
+        "id": "E3",
+        "observation": "No approved change; no fresh exactrequest limits; current errorrate elevated on busiestcohort; no latencyhistogram buckets supplied."
+      }
+    ]
+  },
+  {
+    "id": 107,
+    "prompt": "I upgraded yesterday and resized the cache. Did it help?",
+    "scope": "Synthetic offline replay, not live or independently verified production evidence. Approved contextprod-eu/namespaceplatform; 2026-11-02 UTC unless another timezone is explicit. No external reads, credentials or changes.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "Same weekdayworkhours09-17 localtime Europe/Tallinn: beforeprobeavg.56s, apprequestp951.28s; afterprobeavg.26s,p95.49s; matchedRPS and trafficmix; samplesfresh and covered."
+      },
+      {
+        "id": "E2",
+        "observation": "Cache resize, DBresize and appversion upgrade all happened together yesterday; no controlgroup separating changes; only one comparable postchangeday."
+      },
+      {
+        "id": "E3",
+        "observation": "Queues and poolwait lower postchange; longer validation notyetavailable; operatingcost not supplied."
+      }
+    ]
+  },
+  {
+    "id": 108,
+    "prompt": "Database outage; the connection pooler shows more server connections than usual.",
+    "scope": "Synthetic offline replay, not live or independently verified production evidence. Approved contextprod-eu/namespaceplatform; 2026-11-02 UTC unless another timezone is explicit. No external reads, credentials or changes.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "12:00 DBfreeablememory falls; active swap-in/out and querylatency rise. At12:03 transaction-mode pooler serverinuse rises80->160 withinlimit200, clientsstay500; clientwait rises later; DBfailover12:10."
+      },
+      {
+        "id": "E2",
+        "observation": "No appdeploy or RPS increase; transactionholdtime rises with queryduration; DBsessionmemory measured rising; querymix/history before12:00 incomplete."
+      },
+      {
+        "id": "E3",
+        "observation": "Provider event confirms failover but not initiating cause; adding replicas would add pools unless connection budgets adjusted."
+      }
+    ]
+  },
+  {
+    "id": 109,
+    "prompt": "No NodeClaims exist now. Does that prove no instance fits?",
+    "scope": "Synthetic offline replay. No external reads or changes.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "Read access to NodeClaims is allowed and list is empty at09:10."
+      },
+      {
+        "id": "E2",
+        "observation": "Controller logs unavailable; last pod FailedScheduling at09:00; failed launch/claim deletion and poollimits not checked; controllerhealth unknown."
+      }
+    ]
+  },
+  {
+    "id": 110,
+    "prompt": "HPA desired stayed8 but only1 replica is Ready. Was cache failover the cause?",
+    "scope": "Synthetic offline replay. No external reads or changes.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "Desired/specreplicas8, Ready1 at09:00; seven pods OOMKilled immediately onstartup after revisionb; same node revisiona healthy."
+      },
+      {
+        "id": "E2",
+        "observation": "Cache metrics fresh and stable; provider events show unrelated failover yesterday, not incidentwindow; apppreviouslogs show allocationerror beforeexit; actualwhy revisionb allocates more is unknown."
+      }
+    ]
+  }
+]

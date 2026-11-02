@@ -1,7 +1,7 @@
 # Kubernetes Troubleshooter
 
 An installable Agent Skill for hypothesis-driven production incident investigation,
-with 27 targeted playbooks and executable read-only evidence/metrics helpers.
+with 32 targeted playbooks and executable read-only evidence/metrics helpers.
 Includes conditional [Argo CD investigation](ArgoCD/README.md), safe Application/
 ApplicationSet evidence projection, and local deployment-repository correlation.
 
@@ -68,6 +68,11 @@ Anthropic's same-named validator; those developer tools require PyYAML.
 
 See [evaluation scenarios](evals/evals.json), [offline fixtures](evals/fixtures.json),
 [evaluation results](evals/results.md) and [worked reports](examples/investigations.md).
+The upgrade adds [incident-pattern evaluation scenarios](evals/real-incident-evals.json)
+and [user-supplied sanitized case summaries](examples/real-incident-patterns.md).
+Probe projections keep timing, handler shape and HTTP paths while omitting exec
+commands, HTTP header values and URL query/fragment values. They are deliberately
+partial; inspect any further required non-sensitive field separately.
 Offline HTTP tests run only against a local mock server. No tests use a live cluster.
 The scenario rubric tests reasoning separately from transport correctness; do not
 treat mock helper coverage as evidence of real-world autonomous incident accuracy.

@@ -1,0 +1,129 @@
+{
+  "skill_name": "kubernetes-troubleshooter",
+  "evals": [
+    {
+      "id": 101,
+      "prompt": "Web pods dropped from 8 to 1 and back to 6 in 15 minutes. Is someone experimenting in production?",
+      "expected_output": "Compare desired/available and correlate retained cache wait, credit and provider evidence; audit-search absence does not prove no human involvement.",
+      "files": [
+        "evals/real-incident-fixtures.json"
+      ],
+      "assertions": [
+        "Compare HPA desired with deployment available before blaming scaling",
+        "Check dependency provider metrics and events and the audit trail",
+        "Do not recommend more replicas while the dependency is saturated"
+      ]
+    },
+    {
+      "id": 102,
+      "prompt": "CI jobs fail with 'timed out waiting for pod to start' across all projects.",
+      "expected_output": "Use scheduler/provisioner/provider evidence and total storage accounting to assess request shape, family capacity and quota; recommend measured sizing/diversity and evaluate appropriate quota headroom.",
+      "files": [
+        "evals/real-incident-fixtures.json"
+      ],
+      "assertions": [
+        "Inspect ephemeral-storage requests, not only cpu and memory",
+        "Identify VcpuLimitExceeded or equivalent provider error",
+        "Evaluate quota headroom alongside request-shape and capacity fixes; do not treat a quota increase alone as the proven fix"
+      ]
+    },
+    {
+      "id": 103,
+      "prompt": "Our Git platform is slow and the node pool creates hundreds of nodes a week.",
+      "expected_output": "Correlate node memory pressure/eviction with workload-controller replacement and provisioner churn; inspect requests/RSS/cache, guard, effective probes and HPA behavior without asserting cache is risk-free.",
+      "files": [
+        "evals/real-incident-fixtures.json"
+      ],
+      "assertions": [
+        "Compare memory request with p95 working set and RSS",
+        "Inspect rendered probes and HPA behavior rather than assuming values",
+        "Distinguish RSS/cache and actual pressure; do not call cache-heavy working set risk-free"
+      ]
+    },
+    {
+      "id": 104,
+      "prompt": "Colleagues want HPA max raised from 8 to 12 because it runs 8 replicas every day.",
+      "expected_output": "Measure hours at max per weekday, pod CPU vs request, application concurrency, busiest node CPU, latency at max and dependency headroom; recommend the smallest effective change with evidence.",
+      "files": [
+        "evals/real-incident-fixtures.json"
+      ],
+      "assertions": [
+        "Report working-hours behavior, not only a multi-day mean",
+        "Explain that HPA utilization is relative to the CPU request",
+        "If an earlier claim is contradicted, retract it explicitly"
+      ]
+    },
+    {
+      "id": 105,
+      "prompt": "Image signing fails: certificate is not yet valid, current time is before NotBefore.",
+      "expected_output": "Check client clock and served certificate, then attribute the certificate change via pipeline/apply history and module versions before blaming the tool.",
+      "files": [
+        "evals/real-incident-fixtures.json"
+      ],
+      "assertions": [
+        "Build a timeline of applies and certificate publication",
+        "Do not retrieve private keys or Secrets"
+      ]
+    },
+    {
+      "id": 106,
+      "prompt": "Blackbox probe latency alert: average probe duration above 2s.",
+      "expected_output": "Split probe duration by phase; if processing dominates, investigate backend queueing, node CPU and dependencies in working hours.",
+      "files": [
+        "evals/real-incident-fixtures.json"
+      ],
+      "assertions": [
+        "Use probe phases to separate network/TLS from backend time",
+        "Look at the busiest pod's queue, not only the fleet mean"
+      ]
+    },
+    {
+      "id": 107,
+      "prompt": "I upgraded yesterday and resized the cache. Did it help?",
+      "expected_output": "Before/after table at matching working hours with probe, latency, queue and dependency metrics; list confounders and call results provisional.",
+      "files": [
+        "evals/real-incident-fixtures.json"
+      ],
+      "assertions": [
+        "Compare equal weekday working-hour windows",
+        "Name confounders such as the simultaneous version upgrade"
+      ]
+    },
+    {
+      "id": 108,
+      "prompt": "Database outage; the connection pooler shows more server connections than usual.",
+      "expected_output": "Correlate DB memory/active swap and query latency with later pooler server occupancy at flat client demand; distinguish feedback from initiating cause and assess connection budgets before scaling.",
+      "files": [
+        "evals/real-incident-fixtures.json"
+      ],
+      "assertions": [
+        "Determine whether connections rose before or after latency",
+        "Do not recommend adding application replicas without first evaluating the demonstrated dependency bottleneck and connection budget"
+      ]
+    },
+    {
+      "id": 109,
+      "prompt": "No NodeClaims exist now. Does that prove no instance fits?",
+      "expected_output": "Rank only evidence-supported mechanisms; preserve competing explanations and limits.",
+      "files": [
+        "evals/real-incident-fixtures.json"
+      ],
+      "assertions": [
+        "Do not infer constraints exclude every type solely from absence of current claims",
+        "Name controller/RBAC/pool limits/deleted claims as alternatives and request discriminating retained evidence"
+      ]
+    },
+    {
+      "id": 110,
+      "prompt": "HPA desired stayed8 but only1 replica is Ready. Was cache failover the cause?",
+      "expected_output": "Rank only evidence-supported mechanisms; preserve competing explanations and limits.",
+      "files": [
+        "evals/real-incident-fixtures.json"
+      ],
+      "assertions": [
+        "Prioritize observed startup OOM/rollout evidence instead of assuming dependency waits from desired/Ready counts",
+        "Keep underlying allocation-change cause uncertain and do not blame unrelated provider event"
+      ]
+    }
+  ]
+}

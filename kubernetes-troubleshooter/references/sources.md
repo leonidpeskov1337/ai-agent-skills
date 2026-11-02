@@ -1,5 +1,34 @@
 # Source provenance
 
+## Incident-pattern upgrade — 2026-11-02
+
+Applied the user's supplied ready-to-use file replacements/additions, retaining
+the incident-specific playbooks, mode budgets, claim ledger, detailed metrics and
+expanded read-only projection. The supplied case outcomes are attributed to the
+user; underlying production artifacts were not independently retrieved. Added
+offline replay inputs are explicitly synthetic, including counterexamples.
+
+Concrete corrections to the suggestions were checked against
+[HPA behavior](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/),
+[pod lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/),
+[pod resource accounting](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/),
+[probe configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/),
+[disruptions](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/),
+[Karpenter NodeClaims](https://karpenter.sh/docs/concepts/nodeclaims/),
+[ElastiCache host metrics](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/CacheMetrics.HostLevel.html),
+[CloudTrail coverage](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/view-cloudtrail-events.html)
+and the [blackbox HTTP probe implementation](https://github.com/prometheus/blackbox_exporter/blob/master/prober/http.go).
+
+In particular, HPA does not replace evicted pods; unchanged desired replicas do
+not identify an availability failure's cause; missing NodeClaims/audit results
+are not proof of constraints/automatic action; cache-heavy memory and absent
+container limits do not prove resource safety; partial filesystem accounting
+cannot justify pod storage sizing; and blackbox processing is not solely backend
+compute time. Probe projection excludes exec commands, headers and query values
+to preserve the original sensitive-data boundary.
+
+## Original build and Argo CD sources
+
 Argo CD extension reviewed 2026-10-31 against official
 [resource tracking](https://argo-cd.readthedocs.io/en/stable/user-guide/resource_tracking/),
 [multiple sources](https://argo-cd.readthedocs.io/en/stable/user-guide/multiple_sources/),

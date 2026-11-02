@@ -32,6 +32,12 @@ node or provider logs require their own existing authorization.
 Missing tag/digest vs registry auth vs TLS vs network/rate limit vs architecture. Choose the cheapest discriminating next observation. Inspect both
 supporting and contradictory signals and compare an unaffected cohort.
 
+Production-proven discriminators:
+- Upstream registry 5xx/429 (public helper or base images): failures only on
+ nodes without a cached copy; older nodes keep working. Compare cohorts by node
+ age and check the registry status page/token endpoint.
+- Mirror/pull-through cache auth expiry affects every workload using it at once.
+
 ## Confirmation criteria
 Precise registry/runtime error matches resolved image and affected nodes; do not retrieve pull Secret. Link conclusions to evidence IDs; if the required evidence is missing,
 report a ranked hypothesis and the next test, rather than a confirmed root cause.

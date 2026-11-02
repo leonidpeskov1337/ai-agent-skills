@@ -33,6 +33,13 @@ node or provider logs require their own existing authorization.
 CPU-bound app vs traffic growth vs HPA failure vs node saturation vs slow dependency. Choose the cheapest discriminating next observation. Inspect both
 supporting and contradictory signals and compare an unaffected cohort.
 
+Production-proven discriminators:
+- No container CPU limit: check pod/ancestor cgroup quotas and historical limits
+ before interpreting missing/zero throttle rates. Also inspect hosting-node CPU
+ contention; cumulative counters can retain earlier throttling.
+- A limit that the IaC never set: an out-of-band patch survives upgrades; check
+ the field manager and remove it through IaC (see [churn loop](resource-churn-eviction-loop.md)).
+
 ## Confirmation criteria
 Throttling and latency align in affected containers with CPU demand; compare unthrottled replicas and downstream spans before assigning cause. Link conclusions to evidence IDs; if the required evidence is missing,
 report a ranked hypothesis and the next test, rather than a confirmed root cause.
