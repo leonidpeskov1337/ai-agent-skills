@@ -1,0 +1,41 @@
+{
+ "scan_execution_policy": [
+   {
+     "name": "SAST",
+     "enabled": true,
+     "rules": [
+       {
+         "type": "pipeline",
+         "branch_type": "default"
+       }
+     ],
+     "actions": [
+       {
+         "scan": "sast",
+         "tags": [
+           "scanners"
+         ],
+         "scan_settings": {
+           "ignore_default_before_after_script": true
+         }
+       },
+       {
+         "scan": "secret_detection",
+         "tags": [
+           "scanners"
+         ]
+       }
+     ],
+     "policy_scope": {
+       "projects": {
+         "including": [],
+         "excluding": [
+           {
+             "id": "1234"
+           }
+         ]
+       }
+     }
+   }
+ ]
+}

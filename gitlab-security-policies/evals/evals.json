@@ -1,0 +1,89 @@
+{
+ "skill_name": "gitlab-security-policies",
+ "evals": [
+   {
+     "id": 1,
+     "prompt": "We pushed a new policy.yml to the security policy project an hour ago and now no project in the group runs SAST or secret detection any more.",
+     "expected_output": "Treat whole-document silent rejection as the leading hypothesis; verify via GraphQL loaded policies and schema validation at the instance version tag before anything else.",
+     "files": [
+       "evals/fixtures/rejected_policy.json"
+     ],
+     "assertions": [
+       "Identifies the empty projects.including list and string project id in the fixture as schema/semantic problems",
+       "Explains that one invalid entry disables every policy in the document",
+       "Proposes linting/schema validation in the delivery pipeline as prevention",
+       "Does not suggest editing policies in the UI as the fix when a delivery mechanism owns them"
+     ]
+   },
+   {
+     "id": 2,
+     "prompt": "Dependency scanning gradle-resolution fails in about 40 Android projects since we switched to the v2 template. Log: 'Gradle requires at least JVM runtime version 21. You are currently using 17'.",
+     "expected_output": "Classify as project-owned daemon JVM requirement, give the gradle-daemon-jvm.properties fix with wrapper prerequisite, verify resolution image ships the JDK, and recommend a survey to size the problem.",
+     "files": [],
+     "assertions": [
+       "Assigns ownership to the project, with platform providing a multi-JDK resolution image",
+       "Mentions toolchainVersion and the Gradle wrapper minimum version",
+       "Does not recommend disabling dependency scanning or reverting to v1 as the primary fix",
+       "Suggests scripts/survey_failed_jobs.py to count affected projects"
+     ]
+   },
+   {
+     "id": 3,
+     "prompt": "Team asks for an exception: ignore all findings for CVE-* in their repo for a year because the scanner is noisy.",
+     "expected_output": "Reject as written; propose narrowest workable exceptions (specific identifiers or paths) with mandatory metadata and expiry within organisation maximum, risk owner approval.",
+     "files": [],
+     "assertions": [
+       "Rejects the wildcard identifier",
+       "Requires justification, owner, ticket and an expiry not exceeding policy maximum",
+       "Offers a concrete narrower alternative",
+       "Notes that auto-dismissal happens at the next default-branch ingestion and is not reverted automatically on removal"
+     ]
+   },
+   {
+     "id": 4,
+     "prompt": "A developer says GitLab flags 5000 dependency issues in their Android app while SonarQube found nothing. Are these real? Write a reply.",
+     "expected_output": "Evidence-based reply: different tool categories (SAST vs SCA), group by manifest/configuration, separate shipped vs build-only dependencies, give a prioritised next step; no overclaiming reachability.",
+     "files": [],
+     "assertions": [
+       "Explains SCA versus SAST without dismissing the developer",
+       "Recommends grouping findings by location and configuration before judging",
+       "Does not claim all findings are false positives or all are exploitable",
+       "Keeps the reply concise and actionable"
+     ]
+   },
+   {
+     "id": 5,
+     "prompt": "Design central SAST, secret detection and dependency scanning enforcement for ~2000 projects on GitLab 18.8 self-managed. Findings must not block yet, but we want to introduce blocking later per business unit.",
+     "expected_output": "Group-level security policy project linkage, scan execution policies with MR and default-branch rules, tags, ignore_default_before_after_script, phased modes (scan -> warn -> block) with fail-closed gates later, exceptions model, version-checked schema, staged rollout and surveys.",
+     "files": [],
+     "assertions": [
+       "Verifies features against the 18.8 schema rather than latest docs",
+       "Keeps policy limits (5 per type, action maxProperties) in mind",
+       "Includes a non-production verification and rollback plan",
+       "Maps controls to at least one recognised standard without inventing clause text"
+     ]
+   },
+   {
+     "id": 6,
+     "prompt": "Policy jobs in a newly created project stay pending forever with 'This job is stuck because the project doesn't have any runners online assigned to it'.",
+     "expected_output": "Compare job tag_list with available runners; most likely policy actions lack required tags; fix centrally by adding tags to every action; also check project linkage for new projects.",
+     "files": [],
+     "assertions": [
+       "Checks the job tag_list before blaming runner capacity",
+       "Places the fix in the policy actions, not in the project's .gitlab-ci.yml",
+       "Mentions re-running jobs after the fix because pending jobs do not pick up policy changes"
+     ]
+   },
+   {
+     "id": 7,
+     "prompt": "We removed a path exception yesterday but the vulnerabilities are still dismissed and a merge request is still blocked by the security gate after the finding was dismissed.",
+     "expected_output": "Explain that GitLab does not revert auto-dismissals and that override documents may need a DIRECT resync; MR approval rules are snapshotted; propose approve/re-evaluate/recreate MR and an automation to re-open dismissed findings.",
+     "files": [],
+     "assertions": [
+       "Distinguishes the two symptoms",
+       "Flags mergeRequestResyncSecurityPolicies as experimental and unverified if suggested",
+       "Labels any resync mutation as a write operation requiring approval"
+     ]
+   }
+ ]
+}

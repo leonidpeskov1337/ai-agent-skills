@@ -1,0 +1,4 @@
+interface:
+ display_name: "GitLab Security Policies"
+ short_description: "Design, change, govern and troubleshoot GitLab security policies"
+ default_prompt: "Use $gitlab-security-policies to investigate this security policy or scan issue with read-only evidence first."

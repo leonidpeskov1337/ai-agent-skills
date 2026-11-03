@@ -7,5 +7,8 @@ A collection of reusable AI agent skills for cloud infrastructure, platform engi
   Start with the [incident prompt template](kubernetes-troubleshooter/prompt.md);
   [Argo CD guidance](kubernetes-troubleshooter/ArgoCD/README.md) applies when relevant.
 
-Package with `python tools/package_skill.py`; see the skill README for installation,
+- Design, audit, and troubleshoot centrally enforced GitLab security policies with
+  policy linting, investigation playbooks, and failed-job surveys. [GitLab Security Policies](gitlab-security-policies/README.md)
+
+Package the Kubernetes skill with `python tools/package_skill.py`; see the skill README for installation,
 usage, validation results and operational limits.
