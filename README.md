@@ -1,14 +1,17 @@
-# ai-agent-skills
-A collection of reusable AI agent skills for cloud infrastructure, platform engineering, and security.
+# AI Agent Skills
 
-- [Kubernetes Troubleshooter](kubernetes-troubleshooter/README.md): read-only,
-  hypothesis-driven incident investigation, historical Prometheus/Mimir metrics,
-  32 targeted playbooks, incident/capacity/change-verification modes and offline evaluation fixtures.
-  Start with the [incident prompt template](kubernetes-troubleshooter/prompt.md);
-  [Argo CD guidance](kubernetes-troubleshooter/ArgoCD/README.md) applies when relevant.
+Reusable skills for cloud infrastructure, platform engineering, and security.
 
-- Design, audit, and troubleshoot centrally enforced GitLab security policies with
-  policy linting, investigation playbooks, and failed-job surveys. [GitLab Security Policies](gitlab-security-policies/README.md)
+## Skill catalog
 
-Package the Kubernetes skill with `python tools/package_skill.py`; see the skill README for installation,
-usage, validation results and operational limits.
+| Skill | What it helps you do | Start here |
+| --- | --- | --- |
+| [Kubernetes Troubleshooter](kubernetes-troubleshooter/README.md) | Investigate Kubernetes incidents with read-only diagnostics, historical Prometheus and Mimir metrics, and 32 playbooks. Covers capacity reviews, change verification, and Argo CD when it manages the affected workload. | [Incident prompt](kubernetes-troubleshooter/prompt.md) · [Argo CD guide](kubernetes-troubleshooter/ArgoCD/README.md) |
+| [GitLab Security Policies](gitlab-security-policies/README.md) | Design, audit, and troubleshoot centrally enforced GitLab security policies. Includes a policy linter, investigation playbooks, and a read-only survey of failed scan jobs. | [Policy prompt](gitlab-security-policies/prompt.md) · [Runbooks](gitlab-security-policies/references/runbooks.md) |
+
+## Getting started
+
+Open the skill's README for installation, prerequisites, and usage. Once installed,
+invoke the skill by name and use its prompt template to share the context you have.
+
+To build the Kubernetes `.skill` archive from the repository root, run `python tools/package_skill.py`.
