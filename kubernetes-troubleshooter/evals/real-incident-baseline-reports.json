@@ -1,0 +1,82 @@
+[
+  {
+    "id": 101,
+    "assessment": "Ready replicas fell, with eight still desired and present. Cache degradation is the leading explanation for the readiness failures, with recovery following cache failover.",
+    "evidence": "E1: Ready 1\u21926 at 13:54\u201314:09 UTC, no rollout. E2: cache timeouts and thread waits, no OOM or eviction. E3: cache CPU credits depleted before impact and failover at 14:06 UTC.",
+    "next_checks": "Compare cache errors, endpoint readiness and cache-node metrics before and after failover. If attribution matters, check coverage of audit sources and correlate relevant writes with the incident window.",
+    "recommendations": "Keep application scaling steady while validating recovery. Review cache capacity, CPU credit headroom and latency alerts.",
+    "limitations": "The resource-name audit lookup had no matching human writes. Audit coverage and the trigger for failover remain unknown."
+  },
+  {
+    "id": 102,
+    "assessment": "CI jobs time out because their ephemeral-storage request prevents placement on existing nodes and attempts to provision the fitting shape encounter quota and capacity constraints.",
+    "evidence": "E1: scheduler reports Insufficient ephemeral-storage for 20 Gi request. E2: 1,380 of 1,400 vCPUs used, leaving 20 for a 64-vCPU launch. Another allowed family/zone returns capacity errors. E3: disk request drives shape and CI cannot override it.",
+    "next_checks": "Review tail and per-job disk use including helper/services, logs and emptyDir. Re-run fit calculations with proposed requests and check allowed family/zone quota and capacity independently.",
+    "recommendations": "Stage a measured disk request with headroom and a canary, or adjust runner/pool capacity to fit the existing request. Assess memory separately using observed peaks and variability. Resolve provider quota and diversification where appropriate.",
+    "limitations": "Historical disk p95 and memory p99 are insufficient to prescribe safe resource values for all jobs."
+  },
+  {
+    "id": 103,
+    "assessment": "Node memory pressure causes replica eviction and replacement. Pending replacements cause scale-up, followed by consolidation, explaining churn at constant replica count.",
+    "evidence": "E1: pod UIDs live 20 minutes with zero restarts, MemoryPressure and memory eviction align with replacement and NodeClaim creation. E2: 4 Gi request vs p95 working set 5.6 Gi and RSS 5.2 Gi, guard disabled and one replica fits per node after overhead. E3: separate storage usage is cache-heavy with no current pressure.",
+    "next_checks": "Correlate pod and node events with latency, inspect per-node workload placement, memory peaks, allocatable and eviction thresholds. Check rendered readiness timing and actual HPA settings against intended values.",
+    "recommendations": "Canary app memory guard and revised requests with enough node capacity, and fix readiness/HPA render discrepancies separately. Validate evictions, latency and nodes created against comparable traffic.",
+    "limitations": "Evidence explains churn more directly than platform slowness. Storage cache reclaimability and future memory safety are unverified."
+  },
+  {
+    "id": 104,
+    "assessment": "The prior 14-day mean masked a sustained workday cap. The proposed maximum of 12 needs capacity and dependency checks before a trial.",
+    "evidence": "E2: eight desired about eight hours per weekday, pod CPU at 100% of request against an 80% target, ScalingLimited=True. E3: busiest node CPU p90 98% with four replicas, other nodes moderate, dependency waits rise.",
+    "next_checks": "Check per-pod traffic and CPU, node placement, ancestor CPU quota and fresh throttling, plus dependency pool/connection headroom. Model placement and connection budgets at 12.",
+    "recommendations": "Prioritize relief on saturated hosts and dependency queues. If spare capacity and connection budgets are demonstrated, trial a higher cap with matched peak latency, errors and rollback thresholds.",
+    "limitations": "Thread utilization alone cannot explain pod CPU or establish spare capacity. No container CPU limit does not rule out ancestor limits or contention."
+  },
+  {
+    "id": 105,
+    "assessment": "The served certificate was outside its validity window at job time. The audit and exact fingerprint link its publication to CI applying an old module revision.",
+    "evidence": "E1: clock verified, served certificate NotBefore later than failure. E2: CI service principal published at T, same-time run references served fingerprint, newer revision specifies intended fingerprint. E3: trust-source history unchecked.",
+    "next_checks": "Compare public leaf and chain validity, trust and fingerprints with intended revision, inspect publication history and CI ref selection, and test compatibility before rollback.",
+    "recommendations": "After validation, reapply the intended certificate via approved CI and verify served fingerprint and a signing canary. Add a pre-publication validity and fingerprint check.",
+    "limitations": "Audit identifies a service principal, while who selected the revision and whether client trust changed remain open."
+  },
+  {
+    "id": 106,
+    "assessment": "Ingress queueing dominates the traced slow probe. Peak concentration and host CPU are plausible contributors.",
+    "evidence": "E1: 2.4 s total, 2.2 s processing, only 0.06 s DNS/connect/TLS combined. E2: matching trace has 1.6 s ingress queue, 0.3 s backend compute, busy pod queue 80 vs fleet mean 10. E3: busy cohort errors elevated.",
+    "next_checks": "Compare target/cohort and work-hour baselines, check ingress routing and saturation, per-pod demand, effective CPU requests/limits and throttling. Collect phase distributions and complete response-transit instrumentation.",
+    "recommendations": "Prioritize identifying and relieving the ingress queue with an approved targeted change and compare cohort latency and errors.",
+    "limitations": "Average plus one trace cannot establish tail behavior or fully exclude response transit. Exact resource limits were unavailable."
+  },
+  {
+    "id": 107,
+    "assessment": "The combined changes coincided with substantial improvement during matched weekday work hours. Probe average fell about 54% and request p95 about 62%.",
+    "evidence": "E1: 09:00\u201317:00 Europe/Tallinn with matched RPS/mix, probe 0.56\u21920.26 s and p95 1.28\u21920.49 s. E2\u2013E3: three simultaneous changes and lower queues/pool waits.",
+    "next_checks": "Repeat across several comparable days and peak periods. Compare cache, DB and app metrics with queues, errors and cost.",
+    "recommendations": "Keep tracking the observed gains and use a staged comparison if individual change attribution is needed.",
+    "limitations": "Only one comparable post-change day and no control group or operating costs, so cache-specific impact, persistence and economics are unknown."
+  },
+  {
+    "id": 108,
+    "assessment": "Database memory stress and query slowdown preceded pool growth. Longer transactions likely held connections longer and additional session memory may have amplified the stress.",
+    "evidence": "E1: freeable memory falls and active swap/query latency rise at 12:00, pool server-in-use 80\u2192160 at 12:03 below limit 200, clients unchanged at 500, failover at 12:10. E2: holds and session memory rise without deploy/RPS increase.",
+    "next_checks": "Recover pre-12:00 query mix, long transactions, memory breakdown, lock/I/O indicators and per-pool occupancy, and compare to a matched baseline.",
+    "recommendations": "Protect DB connection headroom and validate memory and latency after failover. Avoid adding app pools until DB and pool budgets are established. Target expensive queries or concurrency if confirmed.",
+    "limitations": "Provider confirms failover but initiating cause is unknown. Later pool usage does not establish the original trigger."
+  },
+  {
+    "id": 109,
+    "assessment": "The empty list establishes no NodeClaims were present at 09:10. Instance fit remains undetermined.",
+    "evidence": "E1: read allowed and list empty. E2: FailedScheduling at 09:00 and no controller logs or health evidence.",
+    "next_checks": "Check pod scheduler reasons, pool eligibility/limits, selectors, taints, affinity, topology and allocatable after overhead. Recover controller health/logs, events and evidence of attempted launches or claim deletion.",
+    "recommendations": "Determine whether the workload was eligible, a claim was attempted and a fitting instance could launch before changing pools or requests.",
+    "limitations": "A point-in-time list cannot reveal earlier attempts, deleted claims or provisioning constraints."
+  },
+  {
+    "id": 110,
+    "assessment": "Revision b startup OOMs account for the readiness loss. The recorded cache failover is from a different window.",
+    "evidence": "E1: seven startup OOMKilled pods after revision b, revision a healthy on the same node, desired/spec 8. E2: allocation error before exit, stable cache metrics and failover yesterday.",
+    "next_checks": "Compare revisions' effective limits, startup settings, init/concurrency and memory profile. Correlate pod status and node memory/cgroup evidence to confirm OOM mechanism.",
+    "recommendations": "Validate rollback compatibility and, if approved, restore revision a or canary a tested fix. Watch readiness and startup memory.",
+    "limitations": "The specific allocation change in revision b and exact memory boundary are unknown."
+  }
+]

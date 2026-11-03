@@ -24,6 +24,10 @@ sum(kube_pod_container_resource_requests{namespace="RUNNER_NS",resource="ephemer
 quantile_over_time(0.95, max by (pod) (container_fs_usage_bytes{namespace="RUNNER_NS"})[7d:5m])
 sum(kube_node_status_capacity{resource="cpu"} * on(node) group_left(label_karpenter_sh_nodepool) kube_node_labels{label_karpenter_sh_nodepool="POOL"})
 ```
+The pool label requires a kube-state-metrics labels allowlist. If unavailable,
+read NodeClaims or node placement through the helper to establish pool membership,
+then sum capacity for those node identities. Pod placement alone only identifies
+nodes hosting the sampled workloads, so it can miss idle nodes in the pool.
 Treat container_fs_usage_bytes as partial until writable layers, logs and
 disk-backed emptyDir across job/helper/service containers are covered; max by
 pod can undercount multi-container demand. Do not reduce pod requests using that

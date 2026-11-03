@@ -2,6 +2,7 @@
 import argparse
 import json
 import math
+import re
 import os
 import ssl
 import time
@@ -28,11 +29,11 @@ def query(base, mode, expression=None, start=None, end=None, step=60, at=None,
     if url.scheme != "https" and not (allow_local_http and url.hostname in
                                                      ("localhost", "127.0.0.1", "::1")):
         raise ValueError("TLS required (HTTP only for explicitly allowed loopback)")
-    if mode not in ("instant", "range", "series", "names"):
+    if mode not in ("instant", "range", "series", "names", "metadata"):
         raise ValueError("unsupported read mode")
     params = {"timeout": "15s"}
     endpoint = {"instant": "query", "range": "query_range", "series": "series",
-                "names": "label/__name__/values"}[mode]
+                "names": "label/__name__/values", "metadata": "metadata"}[mode]
     if mode in ("instant", "range"):
         if not expression or len(expression) > 16000:
             raise ValueError("bounded --query required")
@@ -55,6 +56,10 @@ def query(base, mode, expression=None, start=None, end=None, step=60, at=None,
         if not selector or len(selector) > 2000:
             raise ValueError("scoped --selector required for discovery")
         params["match[]"] = selector
+    if mode == "metadata":
+        if not selector or not re.fullmatch(r"[A-Za-z_:][A-Za-z0-9_:]{0,199}", selector):
+            raise ValueError("exact metric name required for metadata")
+        params["metric"] = selector
     # Older compatible APIs may ignore limit; byte budget still applies.
     params["limit"] = 200
     headers = {"Accept": "application/json"}
@@ -118,7 +123,8 @@ def query(base, mode, expression=None, start=None, end=None, step=60, at=None,
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--base-url", required=True, help="Approved API base, e.g. https://mimir/prometheus")
-    p.add_argument("--mode", choices=("instant", "range", "series", "names"), default="instant")
+    p.add_argument("--mode", choices=("instant", "range", "series", "names", "metadata"),
+                   default="instant", help="metadata: type, help and unit for --selector METRIC_NAME")
     p.add_argument("--query")
     p.add_argument("--selector")
     p.add_argument("--start", type=float, help="UTC Unix seconds")

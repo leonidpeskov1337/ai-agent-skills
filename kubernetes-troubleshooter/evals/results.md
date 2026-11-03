@@ -1,7 +1,33 @@
 # Validation and evaluation results
 
+## Maintainer review follow-up — 2026-11-03
+
+An independent reviewer scored randomized A/B pairs for the ten existing incident
+fixtures. Each pair contained the saved with-skill report and a fresh report from an
+agent given only the fixtures. The reviewer received the rubric and fixtures. The
+condition key was held separately until scoring finished. The saved reports and the
+fresh baseline came from separate runs, and their formats could provide clues about
+condition. This small retrospective comparison measures performance on this rubric.
+
+| Condition | Assertions passed | Rate |
+|---|---:|---:|
+| With skill (saved reports) | 24/24 | 100% |
+| Without skill (fresh baseline) | 21/24 | 87.5% |
+
+The baseline missed an explicit retraction, the names of simultaneous deployment
+changes, and controller permissions as an explanation for missing NodeClaims.
+See the [baseline reports](real-incident-baseline-reports.json) and
+[blind grades](real-incident-blind-grading.json).
+
+The follow-up also adds [three counterexamples](counterexample-fixtures.json) with
+a [separate rubric](counterexample-evals.json) for local lock contention, a justified
+HPA cap increase, and quota consumed by other clusters. Parent review scored the
+[offline reports](counterexample-reports.json) 6/6 against that rubric. The helper
+suite passed all 46 tests, including the new metadata request and selector
+validation test. Both skill validators passed.
+
 Earlier build results below are retained for provenance. The incident-pattern
-upgrade section at the end records the current 45-test suite and new scenarios.
+upgrade section at the end records the earlier 45-test suite and its scenarios.
 
 Executed 2026-10-31 on Windows, Python 3.14.7. No live cluster, production API or real
 credentials were used. Runtime helpers require only Python 3.10+ standard library;

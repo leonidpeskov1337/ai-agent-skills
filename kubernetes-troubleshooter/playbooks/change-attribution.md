@@ -10,9 +10,13 @@ history of the affected chart, deployments/replicasets revisions, and events.
 python scripts/collect_evidence.py --context CONTEXT --namespace NS --resource replicasets --selector app=APP
 python scripts/collect_evidence.py --context CONTEXT --namespace NS --resource events
 ```
-Use existing read-only tooling for `helm --kube-context CONTEXT history RELEASE -n NS`, IaC pipeline
-job lists for the window, cloud audit-trail lookups by resource name, and
-provider event streams.
+Use release metadata from approved sources. Helm's default storage driver reads
+release Secrets for `helm history` and `helm get`. Use sanitized operator output
+when release details are needed.
+
+- If already exported, query `kube_secret_created{namespace="NS",secret=~"sh\\.helm\\.release\\.v1\\.RELEASE\\.v[0-9]+"}`. Escape regex characters in the release name and scope the query to the verified cluster. Sort by numeric revision. Restore or migration can recreate an older revision and change its object timestamp.
+- Compare ReplicaSet creation times and `deployment.kubernetes.io/revision`.
+- Correlate IaC and CI pipeline history with approved cloud audit and provider events.
 
 ## Metrics and historical comparison
 ```promql

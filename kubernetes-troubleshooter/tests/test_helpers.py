@@ -82,6 +82,19 @@ class MetricsTests(unittest.TestCase):
         self.assertIn("step=30", Handler.seen[0][0])
         self.assertEqual(result["response"]["warnings"], ["partial data"])
 
+    def test_metadata_scopes_request_to_one_metric(self):
+        name = "karpenter_nodeclaims_created_total"
+        metadata = {name: [{"type": "counter", "help": "Claims created", "unit": ""}]}
+        Handler.body = {"status": "success", "data": metadata}
+        result = self.call("metadata", selector=name)
+        self.assertIn("/api/v1/metadata?", Handler.seen[-1][0])
+        self.assertIn("metric=" + name, Handler.seen[-1][0])
+        self.assertEqual(result["response"]["data"], metadata)
+        for invalid in (None, '{__name__=~".+"}', "up or vector(1)"):
+            with self.assertRaisesRegex(ValueError, "exact metric name"):
+                self.call("metadata", selector=invalid)
+        self.assertEqual(len(Handler.seen), 1)
+
     def test_scoped_names_and_series(self):
         for mode, path in (("names", "/label/__name__/values?"), ("series", "/series?")):
             self.call(mode, selector='up{job="test"}', start=100, end=200)

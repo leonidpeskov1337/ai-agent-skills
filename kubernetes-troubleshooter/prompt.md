@@ -39,6 +39,24 @@ metrics:
   ca_bundle_file: null
   logs_or_traces_endpoints: []    # Approved endpoints only; no credentials in URLs
 
+cloud:
+  provider_account_or_project: null  # Identifier only
+  region: null
+  read_only_profile_or_role: null    # Approved existing profile or role name
+  audit_trail_available: null        # true, false, or unknown
+managed_dependencies:
+  - kind: null                      # cache, database, pooler, storage, registry
+    identifier: null                # Provider resource ID or in-cluster service
+    instance_class: null
+ci:
+  system: null                      # gitlab, github-actions, jenkins, other
+  runner_namespaces: []
+  required_job_tags: []
+working_hours:
+  timezone: null                    # IANA timezone, e.g. Europe/Tallinn
+  weekdays: [mon, tue, wed, thu, fri]
+  hours: null                       # e.g. "08:00-18:00"
+
 local_cluster_deployment_repos:  # Terraform, Helm, values, Kustomize, app source, GitOps
   - local_path: null              # Absolute existing checkout path; do not change it
     role: null                   # infrastructure, charts, values, GitOps, application
@@ -70,8 +88,9 @@ argocd:
 
 constraints:
   mode: read-only
-  investigation_budget_minutes: 15
-  maximum_diagnostic_calls: 20
+  request_mode: null             # live, retrospective, verification, capacity, attribution, short
+  investigation_budget_minutes: null  # null uses the selected mode default
+  maximum_diagnostic_calls: null      # null uses the selected mode default
   excluded_targets: []
   additional_constraints: []
 ```
@@ -83,6 +102,12 @@ hypotheses with timestamped evidence; select the next read by expected diagnosti
 value. Treat supplied context, repository revisions, metric labels and Argo flags
 as leads to verify. Unknown fields are not blockers unless they affect target
 identity, safety or interpretation. Do not silently turn an unknown into `false`.
+
+Infer the request mode when `request_mode` is null. Apply explicit budget overrides
+individually. Use `working_hours` to segment metrics and resolve relative dates.
+Use the approved named cloud profile or role for provider reads within the supplied
+account/project and region. Treat the managed dependencies and CI fields as leads
+for scoping evidence collection.
 
 Read supplied repositories only where relevant to this incident. Compare effective
 deployment source/revision and live state; do not assume a local checkout or Terraform

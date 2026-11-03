@@ -268,7 +268,8 @@ with low CPU use and exhaust account-level vCPU quota; CPU usage looks fine.
 Before trusting a metric, confirm the exporter, units, and whether it is a
 timestamp, a duration or a remaining time (a "licence" gauge may be seconds
 remaining, not an epoch). Read HELP text where the backend exposes it
-(`/api/v1/metadata?metric=NAME`) and cross-check one value against a known fact.
+using `query_metrics.py --base-url URL --mode metadata --selector NAME` and
+cross-check one value against a known fact. Check type, help and unit when present.
 Application-level queue metrics may come from a separate exporter, not the app.
 
 ### Blackbox probe phases

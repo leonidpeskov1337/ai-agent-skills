@@ -1,0 +1,41 @@
+{
+  "skill_name": "kubernetes-troubleshooter",
+  "evals": [
+    {
+      "id": 111,
+      "prompt": "Checkout latency is high and pod CPU is low. Is the database stalling?",
+      "expected_output": "Identify local lock contention and use lock-holder evidence to prioritize the local rebuild path.",
+      "files": [
+        "evals/counterexample-fixtures.json"
+      ],
+      "assertions": [
+        "Prioritize local lock contention using trace and stack evidence",
+        "Explain why database telemetry weakens the dependency hypothesis"
+      ]
+    },
+    {
+      "id": 112,
+      "prompt": "The HPA is at max every weekday. Should we raise the cap?",
+      "expected_output": "Recommend a bounded increase to the tested 12-replica cap with verification and rollback criteria.",
+      "files": [
+        "evals/counterexample-fixtures.json"
+      ],
+      "assertions": [
+        "Recommend increasing the cap based on measured demand and the successful load test",
+        "Use node, quota and dependency headroom to support the recommendation"
+      ]
+    },
+    {
+      "id": 113,
+      "prompt": "Our runner NodeClaim hit a regional vCPU quota. Are our pod requests too large?",
+      "expected_output": "Attribute the blocked launch to aggregate regional consumption and avoid unsupported request reductions.",
+      "files": [
+        "evals/counterexample-fixtures.json"
+      ],
+      "assertions": [
+        "Calculate that the shared quota leaves 8 vCPUs for a 16-vCPU launch",
+        "Prioritize account-wide quota or capacity coordination based on the measured request fit"
+      ]
+    }
+  ]
+}

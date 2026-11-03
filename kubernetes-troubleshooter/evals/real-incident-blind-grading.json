@@ -1,0 +1,315 @@
+{
+  "counts": {
+    "with": 24,
+    "without": 21
+  },
+  "assertions_per_condition": 24,
+  "cases": [
+    {
+      "id": 101,
+      "assertions": [
+        "Compare HPA desired with deployment available before blaming scaling",
+        "Check dependency provider metrics and events and the audit trail",
+        "Do not recommend more replicas while the dependency is saturated"
+      ],
+      "without": [
+        {
+          "passed": true,
+          "evidence": "Compares eight desired and present with the Ready drop."
+        },
+        {
+          "passed": true,
+          "evidence": "Correlates cache credit metrics and provider failover, then proposes checking audit coverage and writes."
+        },
+        {
+          "passed": true,
+          "evidence": "Recommends keeping application scaling steady."
+        }
+      ],
+      "with": [
+        {
+          "passed": true,
+          "evidence": "Compares desired/spec/current eight with Ready 1\u21926."
+        },
+        {
+          "passed": true,
+          "evidence": "Uses cache metrics, provider failover, and audit lookup with follow-up coverage checks."
+        },
+        {
+          "passed": true,
+          "evidence": "Warns extra app replicas could amplify cache load."
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "assertions": [
+        "Inspect ephemeral-storage requests, not only cpu and memory",
+        "Identify VcpuLimitExceeded or equivalent provider error",
+        "Evaluate quota headroom alongside request-shape and capacity fixes; do not treat a quota increase alone as the proven fix"
+      ],
+      "without": [
+        {
+          "passed": true,
+          "evidence": "Identifies the 20 Gi ephemeral-storage request and scheduler rejection."
+        },
+        {
+          "passed": true,
+          "evidence": "Quantifies the provider vCPU quota block: 20 remaining for a 64-vCPU launch."
+        },
+        {
+          "passed": true,
+          "evidence": "Checks quota, eligible capacity, and candidate request fit independently."
+        }
+      ],
+      "with": [
+        {
+          "passed": true,
+          "evidence": "Names ephemeral-storage fit failure and gives disk request and usage."
+        },
+        {
+          "passed": true,
+          "evidence": "Names VcpuLimitExceeded and quantifies the quota block."
+        },
+        {
+          "passed": true,
+          "evidence": "Evaluates request fit, quota headroom, and family/zone capacity separately."
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "assertions": [
+        "Compare memory request with p95 working set and RSS",
+        "Inspect rendered probes and HPA behavior rather than assuming values",
+        "Distinguish RSS/cache and actual pressure; do not call cache-heavy working set risk-free"
+      ],
+      "with": [
+        {
+          "passed": true,
+          "evidence": "Compares 4 Gi requested with p95 working set 5.6 Gi and RSS 5.2 Gi."
+        },
+        {
+          "passed": true,
+          "evidence": "Identifies rendered probe/HPA discrepancies and proposes comparing fields with intended values."
+        },
+        {
+          "passed": true,
+          "evidence": "Separates the cache-heavy workload from evictions and flags unknown reclaimability."
+        }
+      ],
+      "without": [
+        {
+          "passed": true,
+          "evidence": "Compares 4 Gi requested with p95 working set 5.6 Gi and RSS 5.2 Gi."
+        },
+        {
+          "passed": true,
+          "evidence": "Calls for checking rendered readiness timing and actual HPA settings against intent."
+        },
+        {
+          "passed": true,
+          "evidence": "Attributes observed evictions to pressure and flags separate storage cache reclaimability and future risk as unverified."
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "assertions": [
+        "Report working-hours behavior, not only a multi-day mean",
+        "Explain that HPA utilization is relative to the CPU request",
+        "If an earlier claim is contradicted, retract it explicitly"
+      ],
+      "with": [
+        {
+          "passed": true,
+          "evidence": "Reports eight desired about eight hours each weekday."
+        },
+        {
+          "passed": true,
+          "evidence": "Calculates 1.5 cores divided by the 1.5-core request as 100% against an 80% target."
+        },
+        {
+          "passed": true,
+          "evidence": "Explicitly retracts the incident-only cap claim."
+        }
+      ],
+      "without": [
+        {
+          "passed": true,
+          "evidence": "Reports eight desired about eight hours each weekday."
+        },
+        {
+          "passed": true,
+          "evidence": "States pod CPU was 100% of request against the 80% target."
+        },
+        {
+          "passed": false,
+          "evidence": "Corrects the picture but does not explicitly retract the prior incident-only claim."
+        }
+      ]
+    },
+    {
+      "id": 105,
+      "assertions": [
+        "Build a timeline of applies and certificate publication",
+        "Do not retrieve private keys or Secrets"
+      ],
+      "without": [
+        {
+          "passed": true,
+          "evidence": "Connects same-time CI apply and publication at T to the served fingerprint and failed job validity check."
+        },
+        {
+          "passed": true,
+          "evidence": "Limits certificate inspection to public metadata and does not request keys or Secrets."
+        }
+      ],
+      "with": [
+        {
+          "passed": true,
+          "evidence": "Correlates the T publication and old CI apply with the served fingerprint and job failure."
+        },
+        {
+          "passed": true,
+          "evidence": "Explicitly prohibits retrieving keys or Secrets."
+        }
+      ]
+    },
+    {
+      "id": 106,
+      "assertions": [
+        "Use probe phases to separate network/TLS from backend time",
+        "Look at the busiest pod's queue, not only the fleet mean"
+      ],
+      "with": [
+        {
+          "passed": true,
+          "evidence": "Separates DNS/connect/TLS from processing, then uses the matching trace for backend compute and ingress queue time."
+        },
+        {
+          "passed": true,
+          "evidence": "Reports busiest queue 80 versus mean 10 and proposes checking busy versus healthy pods."
+        }
+      ],
+      "without": [
+        {
+          "passed": true,
+          "evidence": "Quantifies DNS/connect/TLS at 0.06 s and separates traced backend compute and queue time."
+        },
+        {
+          "passed": true,
+          "evidence": "Reports busy pod queue 80 versus mean 10 and calls for per-pod checks."
+        }
+      ]
+    },
+    {
+      "id": 107,
+      "assertions": [
+        "Compare equal weekday working-hour windows",
+        "Name confounders such as the simultaneous version upgrade"
+      ],
+      "without": [
+        {
+          "passed": true,
+          "evidence": "Reports matched weekday 09:00\u201317:00 windows with comparable traffic and before/after measures."
+        },
+        {
+          "passed": false,
+          "evidence": "Mentions three simultaneous changes but does not identify the app version upgrade or DB resize."
+        }
+      ],
+      "with": [
+        {
+          "passed": true,
+          "evidence": "Uses matched weekday 09\u201317 Tallinn work hours and comparable traffic."
+        },
+        {
+          "passed": true,
+          "evidence": "Names concurrent cache resize, DB resize, and app upgrade."
+        }
+      ]
+    },
+    {
+      "id": 108,
+      "assertions": [
+        "Determine whether connections rose before or after latency",
+        "Do not recommend adding application replicas without first evaluating the demonstrated dependency bottleneck and connection budget"
+      ],
+      "with": [
+        {
+          "passed": true,
+          "evidence": "Places latency and swapping at 12:00 and pool growth at 12:03."
+        },
+        {
+          "passed": true,
+          "evidence": "Avoids default app scaling and calls for an aggregate pool budget against DB headroom."
+        }
+      ],
+      "without": [
+        {
+          "passed": true,
+          "evidence": "Places latency and memory stress at 12:00 and pool growth at 12:03."
+        },
+        {
+          "passed": true,
+          "evidence": "Calls for protecting DB headroom and avoiding added app pools before budgets are known."
+        }
+      ]
+    },
+    {
+      "id": 109,
+      "assertions": [
+        "Do not infer constraints exclude every type solely from absence of current claims",
+        "Name controller/RBAC/pool limits/deleted claims as alternatives and request discriminating retained evidence"
+      ],
+      "without": [
+        {
+          "passed": true,
+          "evidence": "Treats the empty list as a point-in-time snapshot and leaves instance fit unresolved."
+        },
+        {
+          "passed": false,
+          "evidence": "Checks controller health, pool limits and deleted claims, but omits controller permissions/RBAC."
+        }
+      ],
+      "with": [
+        {
+          "passed": true,
+          "evidence": "Explicitly rejects the inference that no instance fits."
+        },
+        {
+          "passed": true,
+          "evidence": "Names controller health/permissions, pool constraints and deleted claims, and requests retained events, usage and deletion reasons."
+        }
+      ]
+    },
+    {
+      "id": 110,
+      "assertions": [
+        "Prioritize observed startup OOM/rollout evidence instead of assuming dependency waits from desired/Ready counts",
+        "Keep underlying allocation-change cause uncertain and do not blame unrelated provider event"
+      ],
+      "with": [
+        {
+          "passed": true,
+          "evidence": "Attributes readiness loss to seven revision-b startup OOMs and contrasts healthy revision a."
+        },
+        {
+          "passed": true,
+          "evidence": "Leaves allocation mechanism unresolved and rules out the out-of-window cache failover as the supported cause."
+        }
+      ],
+      "without": [
+        {
+          "passed": true,
+          "evidence": "Attributes readiness loss to the seven startup OOMs after revision b."
+        },
+        {
+          "passed": true,
+          "evidence": "Leaves allocation change and memory boundary uncertain and puts failover outside the incident window."
+        }
+      ]
+    }
+  ]
+}

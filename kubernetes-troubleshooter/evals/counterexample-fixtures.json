@@ -1,0 +1,47 @@
+[
+  {
+    "id": 111,
+    "prompt": "Checkout latency is high and pod CPU is low. Is the database stalling?",
+    "scope": "Synthetic offline case. Use supplied evidence only.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "Checkout traces spend 850 ms acquiring an in-process mutex. Lock-holder stack samples show a synchronous local cache rebuild."
+      },
+      {
+        "id": "E2",
+        "observation": "Database spans remain at 12 ms with stable pool wait and error rates. The issue began after the cache rebuild path changed."
+      }
+    ]
+  },
+  {
+    "id": 112,
+    "prompt": "The HPA is at max every weekday. Should we raise the cap?",
+    "scope": "Synthetic offline case. Use supplied evidence only.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "CPU utilization is 92% of requests against a 60% target. HPA desired and ready replicas are 8, ScalingLimited is true, and queue depth rises with latency during peaks."
+      },
+      {
+        "id": "E2",
+        "observation": "A comparable 12-replica load test meets the SLO, with node capacity, quota and dependency headroom verified. Current replicas have balanced traffic."
+      }
+    ]
+  },
+  {
+    "id": 113,
+    "prompt": "Our runner NodeClaim hit a regional vCPU quota. Are our pod requests too large?",
+    "scope": "Synthetic offline case. Use supplied evidence only.",
+    "evidence": [
+      {
+        "id": "E1",
+        "observation": "The relevant regional quota is 1400 vCPUs. Other clusters use 1360 and this cluster uses 32. The next eligible node requires 16 vCPUs."
+      },
+      {
+        "id": "E2",
+        "observation": "Job CPU, memory and complete ephemeral-storage peaks are close to the declared requests. Scheduler fit records show that smaller instances cannot fit the job and daemon overhead."
+      }
+    ]
+  }
+]
