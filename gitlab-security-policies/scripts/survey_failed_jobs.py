@@ -40,6 +40,7 @@ SIGNATURES: list[tuple[str, str, str]] = [
    ("artifact_413", "admin", r"413 Payload Too Large|Request Entity Too Large|artifact.*too large"),
    # Anchored so the two lookaheads scan the log once instead of from every offset.
    ("advanced_sast_oom", "platform", r"(?s)\A(?=.*lightz)(?=.*OOMKilled)"),
+   ("kics_resolver_oom", "platform", r"(?s)\A(?=.*\bkics\b)(?=.*OOMKilled)"),
    ("oom", "infra", r"OOMKilled|exit code 137"),
    ("gradlew_not_executable", "project", r"fork/exec \S*gradlew: permission denied"),
    ("before_script", "platform", r"shopt: not found|readarray: not found"),

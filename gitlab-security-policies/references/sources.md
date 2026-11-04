@@ -3,6 +3,20 @@
 
 ## Provenance
 
+The KICS additions on 2026-11-05 use the supplied incident report for GitLab EE
+19.4, analyzer `kics` 6.13.0 and KICS 2.1.20. The reporter describes native
+reproduction and a confirming non-production run. Repository maintenance did not
+rerun those scans or independently verify their findings and memory measurements.
+The report describes generated CI YAML referencing an 844 KB `pnpm-lock.yaml`
+36 times, plus package files, after earlier-stage artifacts were downloaded.
+
+The [KICS CLI reference](https://docs.kics.io/latest/commands/) documents resolver
+depth 15 and per-query timeout 60 seconds as defaults. The supplied analyzer's
+`KICS_MAX_RESOLVER_DEPTH`/`KICS_TIMEOUT` mappings and its node-level memory output
+remain version-specific observations to verify on the installed image. Current
+KICS documentation describes `.gitignore` exclusions, while the supplied incident
+reports that those entries failed to resolve the memory problem in its input set.
+
 
 The supplied material attributes behaviour marked *measured* to centrally enforced policies on
 GitLab EE 19.2–19.4 self-managed. The estate had about 3,000 projects across several business

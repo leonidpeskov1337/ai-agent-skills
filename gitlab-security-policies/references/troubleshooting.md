@@ -55,7 +55,9 @@ The regexes in `scripts/survey_failed_jobs.py` mirror these tables. Keep the two
 | `gl-container-scanning-report.json: no matching files` | No image to scan (`CS_IMAGE` unset) | project/platform | Set `CS_IMAGE` in the image-building job's pipeline, or scanner exception for repos with no image |
 | `prepare environment`, `error dialing backend`, `tls: internal error`, `scheduler_failure`, `Resolving timed out` | Runner/Kubernetes transient | infra | Retry; recurring → runner/kubelet investigation |
 | `exit code: 137, reason: 'OOMKilled'` with `lightz-core` lines (class `advanced_sast_oom`) | Advanced SAST workers × detected memory exceed the pod limit. A large repository makes it worse. Small repositories pass with the same settings | platform | Size the policy's SAST action (pod limit plus `ADVANCED_SAST_AVAILABLE_*`). Projects may add `SAST_EXCLUDED_PATHS` |
-| `ERROR: Job failed: pod … OOMKilled`, exit 137 | Memory limit for scanner; analyzer workers sized from node CPUs, not cgroup | infra/platform | Cap analyzer workers and raise memory for policy jobs |
+| `OOMKilled` with KICS markers (class `kics_resolver_oom`), often after `Inspector initialized, number of queries=…` | Candidate file-reference expansion from repository or downloaded-artifact YAML/JSON, or effective pod memory sizing | platform | Check input references, runner override and actual limit. Evaluate resolver depth 0 on an approved sandbox canary and compare exact findings. The routing signature identifies KICS OOM for investigation and requires further evidence to establish resolver expansion. |
+| `ERR Timeout processing the results` in a successful KICS job | Query execution exceeded its timeout and report coverage may be incomplete | platform | Inspect effective per-query timeout and completion. Evaluate `KICS_TIMEOUT: "300"` with coverage and overall job-budget checks. |
+| `ERROR: Job failed: pod … OOMKilled`, exit 137 | Effective scanner memory limit, input expansion or analyzer-specific worker sizing | infra/platform | Cap analyzer workers and raise memory for policy jobs |
 | `fork/exec …/gradlew: permission denied` (in `spotbugs-sast`) | Wrapper committed as `100644`; SpotBugs executes it directly | project | `git update-index --chmod=+x gradlew` and commit |
 | `Problems writing to Binary store` | Gradle cache on shared volume / disk | infra | Retry; check volume |
 | `fatal: … not our ref`, exit 128 at fetch, HTTP 500 from GitLab | Git/GitLab transient | infra | Retry |
@@ -63,6 +65,9 @@ The regexes in `scripts/survey_failed_jobs.py` mirror these tables. Keep the two
 | `x509: certificate signed by unknown authority`, `PKIX path building failed` | TLS interception without CA in analyzer image | platform/infra | Supply CA via `ADDITIONAL_CA_CERT_BUNDLE` (policy variable) |
 | `toomanyrequests` / image pull 429 | Registry rate limit pulling analyzer images | platform | Pull analyzers via internal registry mirror (`SECURE_ANALYZERS_PREFIX`) |
 
+
+The failed-job survey examines failed jobs. Inspect successful KICS logs separately
+for query timeouts and verify report completeness.
 
 ## Dependency scanning v2 resolution
 

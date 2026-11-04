@@ -101,6 +101,26 @@ scan_execution_policy:
  change is a behaviour change, so roll it out like one.
 
 
+### KICS resolver and timeout canary
+
+For the IaC-producing action, evaluate the following variables on an approved
+non-production canary after confirming the installed analyzer accepts them.
+The memory values illustrate the supplied incident's sizing. Check runner override
+permissions and capacity, and review other scanners if they share this action.
+
+```yaml
+variables:
+  KICS_MAX_RESOLVER_DEPTH: "0"
+  KICS_TIMEOUT: "300"
+  KUBERNETES_MEMORY_REQUEST: "4Gi"
+  KUBERNETES_MEMORY_LIMIT: "8Gi"
+```
+
+Record effective resolver depth and query timeout, peak memory and runtime, report
+ingestion, and exact rule/file/line differences against the previous configuration.
+Reducing reference resolution can affect coverage on other inputs. Preserve the
+prior settings for rollback and verify query completion alongside job success.
+
 ## Approval policy (gate)
 
 

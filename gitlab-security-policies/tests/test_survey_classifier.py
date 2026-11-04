@@ -72,6 +72,15 @@ class ClassifierTest(unittest.TestCase):
        self.assertEqual(s.classify(log.replace("Lightz", "x").replace("lightz", "x")), ("oom", "infra"))
 
 
+   def test_kics_oom_routes_before_generic_oom(self):
+       log = ("[INFO] [kics] [2026-11-04T11:17:18Z] Inspector initialized, number of queries=1240\n"
+              "ERROR: Job failed: exit code: 137, reason: 'OOMKilled'")
+       self.assertEqual(s.classify(log), ("kics_resolver_oom", "platform"))
+       self.assertEqual(s.classify(log.replace("[kics]", "[x]")), ("oom", "infra"))
+       self.assertEqual(s.classify(log.split("\n")[0]), ("unclassified", "unknown"))
+       self.assertEqual(s.classify(log.replace("[kics]", "[mykicswrapper]")), ("oom", "infra"))
+
+
    def test_failure_reason_fallback(self):
        self.assertEqual(s.classify(None, "runner_system_failure"), ("runner_infra", "infra"))
 
