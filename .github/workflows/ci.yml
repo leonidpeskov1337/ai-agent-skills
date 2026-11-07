@@ -53,6 +53,9 @@ jobs:
           else
             echo 'has-skills=true' >> "$GITHUB_OUTPUT"
           fi
+      - name: Install package secret scanner
+        if: steps.changes.outputs.has-skills == 'true' || steps.changes.outputs.tooling == 'true'
+        run: python -m tools.install_binary gitleaks
       - name: Shared repository tests
         if: steps.changes.outputs.tooling == 'true'
         run: python -m pytest tools/tests --ignore=tools/tests/test_external_checks.py -q
@@ -61,7 +64,6 @@ jobs:
         env:
           MATRIX: ${{ steps.changes.outputs.matrix }}
         run: |
-          python -m tools.install_binary gitleaks
           python -c 'import json, os; from tools.package_skill import package; from tools.validate_repo import ROOT; [package(ROOT/s, ROOT/"dist", scan_secrets=True) for s in json.loads(os.environ["MATRIX"])["skill"]]'
   tests:
     name: Skill tests (${{ matrix.skill }})
