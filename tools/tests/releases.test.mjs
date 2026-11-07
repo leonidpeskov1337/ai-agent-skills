@@ -23,3 +23,8 @@ test('filesystem discovery and commit analysis isolate independent skills', asyn
   assert.equal(await analyzeCommits({skill:'second-skill'},context),null);
  } finally {process.chdir(original);rmSync(temp,{recursive:true,force:true});}
 });
+
+test('semantic-release creates the initial third-skill tag and retry is a no-op', () => {
+ const env={...process.env}; delete env.NODE_TEST_CONTEXT;
+ execFileSync(process.execPath,['tools/tests/initial_release.mjs'],{env,stdio:'pipe'});
+});

@@ -23,7 +23,27 @@ FOLDERS = {
     "ArgoCD",
     "assets",
 }
-SUFFIXES = {".md", ".py", ".json", ".yaml", ".yml", ".txt", ".svg", ".png", ".jpg"}
+SUFFIXES = {
+    ".md",
+    ".py",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".txt",
+    ".svg",
+    ".png",
+    ".jpg",
+    ".sh",
+    ".ps1",
+    ".js",
+    ".mjs",
+    ".cjs",
+    ".ts",
+    ".toml",
+    ".csv",
+    ".html",
+    ".css",
+}
 
 
 def package(skill, output):

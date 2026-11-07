@@ -41,3 +41,12 @@ still reports the unused bundled dependencies; this is not a zero-advisory claim
 
 Earlier governance/research/verification documents describe the initial implementation;
 this audit and releases.md supersede their disabled-release and registry instructions.
+
+## Verification
+
+117 Python tests and 33 subtests passed locally. Node regressions cover branch and
+commit policy, path-scoped release analysis, filesystem discovery, and an actual
+semantic-release initial 1.0.0 tag followed by a no-op retry in a disposable bare
+Git repository. Hosted PR CI passed all applicable jobs. Native ruleset 26754711
+was read back as active with no bypass actors; an actual direct main push was
+rejected with GH013 (PR and Validation gate required).
