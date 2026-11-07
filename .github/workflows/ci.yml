@@ -156,7 +156,7 @@ jobs:
           fi
   release:
     needs: gate
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: always() && needs.gate.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/release.yml # zizmor: ignore[self-repository]
     permissions:
       contents: write
