@@ -8,7 +8,7 @@ workflow execution or live branch protection.
 ## Passed locally
 
 - Full pytest suite: **114 tests and 33 subtests passed**, including existing skill tests and repository negative fixtures.
-- **Three Node policy tests passed**, including invalid middle commit with a valid tip.
+- **Four Node policy tests passed**, including invalid middle commit with a valid tip and the actual strict PR-title configuration.
 - Official pinned Anthropic validator and supplementary checks for both skills.
 - Ruff lint across Python sources and formatting of shared tooling.
 - yamllint and configured Markdown structural lint.
@@ -54,8 +54,10 @@ Patched explicit overrides resolved the findings; Markdown lint still passes.
   protected environment, trusted ref and validation are prerequisites.
 - Direct push / force push / branch deletion denial: no ruleset activated and no
   destructive governance tests performed on trunk.
-- Authenticated administrator settings, plan, independent reviewer count and classic
-  protection verification: public metadata alone does not establish these.
+- Account billing plan and native metadata-rule availability were not inspected.
+  Authenticated admin reads did confirm no rulesets/classic protection/environments,
+  only the owner as a direct collaborator, all merge methods enabled and branch
+  auto-deletion disabled; Actions defaults are already read-only.
 - Live Kubernetes, GitLab, Mimir or Argo CD calls: none performed.
 
 ## Remaining administrator steps

@@ -59,3 +59,16 @@ test('commitlint accepts conventional, breaking, merge and revert commits', () =
     assert.notEqual(result.status, 0, input);
   }
 });
+
+test('the actual PR title config accepts valid titles and disables generated-message ignores', () => {
+  const cli = path.resolve('node_modules/@commitlint/cli/cli.js');
+  const config = path.resolve('commitlint.title.config.cjs');
+  for (const input of ['ci: add skill validation and repository governance', 'feat(api)!: remove old field']) {
+    const result = spawnSync(process.execPath, [cli, '--config', config, '--verbose'], {input, encoding: 'utf8'});
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+  }
+  for (const input of ['Invalid title', "Merge branch 'main' into feature/example", 'v1.2.3']) {
+    const result = spawnSync(process.execPath, [cli, '--config', config, '--verbose'], {input, encoding: 'utf8'});
+    assert.notEqual(result.status, 0, input);
+  }
+});

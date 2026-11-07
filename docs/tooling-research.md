@@ -78,7 +78,9 @@ same-commit reusable-workflow syntax: current actionlint rejects zizmor's sugges
 - [GitHub rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets)
   and [available rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets):
   public Free support confirmed by documentation; actual account plan, metadata-rule
-  availability, classic protection and environment configuration need admin verification.
+  availability need separate verification. Authenticated admin reads subsequently
+  confirmed no rulesets/classic protection/environments and only the owner as a
+  direct collaborator; no settings were changed.
 
 No dependency is assumed safe solely because it is popular or official. Networked
 dependency audits and repository secret scans are part of CI; they must be rerun

@@ -16,13 +16,14 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
+          package-manager-cache: false
       - run: npm ci --ignore-scripts
       - name: Validate contributor branch name
         run: node tools/branch_policy.cjs
       - name: Validate PR title
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: printf '%s\n' "$PR_TITLE" | npx --no-install commitlint --default-ignores=false --verbose
+        run: printf '%s\n' "$PR_TITLE" | npx --no-install commitlint --config commitlint.title.config.cjs --verbose
       - name: Validate every introduced commit
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}

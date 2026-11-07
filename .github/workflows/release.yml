@@ -72,5 +72,5 @@ jobs:
           test "$(gh api "repos/$GH_REPO/commits/$DEFAULT_BRANCH" --jq .sha)" = "$RELEASE_SHA"
           test "$(gh api "repos/$GH_REPO/commits/$RELEASE_TAG" --jq .sha)" = "$RELEASE_SHA"
           gh run download "$RUN_ID" --repo "$GH_REPO" --name release-package --dir dist
-          (cd dist && sha256sum --check *.sha256)
+          (cd dist && sha256sum --check ./*.sha256)
           gh release create "$RELEASE_TAG" dist/* --repo "$GH_REPO" --verify-tag --generate-notes

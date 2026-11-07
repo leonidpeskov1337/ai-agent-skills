@@ -2,11 +2,13 @@
 
 ## Discovery and gap analysis
 
-Public GitHub API inspection on 2026-11-07 confirmed `main` as the default branch,
-public visibility, and an empty repository ruleset list. Unauthenticated branch
-protection reads returned HTTP 401, so classic protection and private settings
-could not be verified. No live settings were changed. The account plan and number
-of independent maintainers were not available through public metadata.
+GitHub API inspection on 2026-11-07 confirmed `main` as the default branch,
+public visibility, and an empty repository ruleset list. Subsequent authenticated
+admin reads confirmed no classic protection on `main` (404), only the owner as a
+direct collaborator, and no environments. All three merge methods are enabled and
+merged branches are not automatically deleted. Actions defaults already use a
+read-only token and cannot approve PR reviews. No live settings were changed.
+The account billing plan was not inspected.
 
 Before this change the repository had two root skills, Python standard-library
 helpers, 81 offline tests, JSON incident/evaluation/report artifacts, and a
@@ -105,7 +107,13 @@ exclusions for trunk. Native restrictions apply only to this repository's branch
 the PR check is still needed for forks. Do not activate an unconditional pattern
 that blocks trunk or approved automation.
 
-Native commit-message metadata rules, if available, can restrict server-side pushes.
+GitHub's Enterprise documentation limits additional commit metadata controls to
+Enterprise organizations; this personal repository uses PR policy checks. The
+branch regex is `^(feature|fix|skill|refactor|docs|test|ci|chore|security)/[a-z0-9]+(-[a-z0-9]+)*$`.
+Bot exceptions require separate identity-aware policy; do not allow every human to
+use automation prefixes merely to satisfy a native regex.
+
+Native commit-message metadata rules, where available, can restrict server-side pushes.
 They use regex semantics and do not replace commitlint; account for generated merge,
 revert and automation messages before activation. Without these native restrictions,
 invalid commits can be pushed to development branches but cannot satisfy an intact
