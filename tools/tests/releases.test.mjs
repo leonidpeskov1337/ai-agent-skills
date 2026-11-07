@@ -21,6 +21,7 @@ test('filesystem discovery and commit analysis isolate independent skills', asyn
   const context={commits,cwd:temp,logger:{log(){}}};
   assert.equal(await analyzeCommits({skill:'first-skill'},context),'minor');
   assert.equal(await analyzeCommits({skill:'second-skill'},context),null);
+  assert.equal(await analyzeCommits({skill:'first-skill'},{...context,commits:[{...commits[0],message:'feat!: remove old interface'}]}),'major');
  } finally {process.chdir(original);rmSync(temp,{recursive:true,force:true});}
 });
 

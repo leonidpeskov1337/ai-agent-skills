@@ -12,10 +12,10 @@ export function relevant(skill, commits) {
 export async function analyzeCommits(config, context) {
   const commits = relevant(config.skill, context.commits);
   if (!commits.length) return null;
-  return await analyze({}, {...context, commits}) || 'patch';
+  return await analyze({preset:"conventionalcommits"}, {...context, commits}) || 'patch';
 }
 export async function generateNotes(config, context) {
-  return notes({}, {...context, commits: relevant(config.skill, context.commits)});
+  return notes({preset:"conventionalcommits"}, {...context, commits: relevant(config.skill, context.commits)});
 }
 export async function prepare(config) {
   execFileSync('python', ['-m','tools.package_skill',config.skill], {stdio:'inherit'});
