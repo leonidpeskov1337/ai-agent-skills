@@ -14,4 +14,15 @@ Reusable skills for cloud infrastructure, platform engineering, and security.
 Open the skill's README for installation, prerequisites, and usage. Once installed,
 invoke the skill by name and use its prompt template to share the context you have.
 
-To build the Kubernetes `.skill` archive from the repository root, run `python tools/package_skill.py`.
+To build an independent `.skill` archive, install the development dependencies and
+run `python -m tools.package_skill kubernetes-troubleshooter` or
+`python -m tools.package_skill gitlab-security-policies`. Archives and checksums are
+written to `dist/`.
+
+## Development
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, Conventional Commits
+and local checks. [CI and governance](docs/ci-governance.md) describes validation,
+security checks and the GitHub settings that require administrator approval.
+[Releases](docs/releases.md) and [model evaluations](docs/evaluations.md) are manual,
+trusted-ref workflows and start disabled until configured.
