@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import subprocess
 from pathlib import PurePosixPath
 
@@ -27,13 +28,30 @@ def main():
     parser.add_argument("head")
     args = parser.parse_args()
     # NUL separators safely handle filenames with whitespace/newlines. Include both rename paths.
-    result = subprocess.run(
-        ["git", "diff", "--name-only", "--no-renames", "-z", args.base, args.head],
-        check=True,
-        capture_output=True,
-    )
-    paths = result.stdout.decode("utf-8").rstrip("\0").split("\0") if result.stdout else []
-    print(json.dumps({"skill": select(paths, skills())}, separators=(",", ":")))
+    names = skills()
+    if args.base == "0" * 40 or args.base == "all":
+        selected = names
+        paths = None
+    else:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "--no-renames", "-z", args.base, args.head],
+            check=True,
+            capture_output=True,
+        )
+        paths = result.stdout.decode("utf-8").rstrip("\0").split("\0") if result.stdout else []
+        selected = select(paths, names)
+    print(json.dumps({"skill": selected}, separators=(",", ":")))
+    output = os.environ.get("GITHUB_OUTPUT")
+    if output:
+        shared = paths is None or any(
+            not (
+                p.split("/")[0] in names
+                or (p.endswith(".md") and ("/" not in p or p.startswith("docs/")))
+            )
+            for p in paths
+        )
+        with open(output, "a", encoding="utf-8") as stream:
+            stream.write(f"tooling={str(shared).lower()}\n")
 
 
 if __name__ == "__main__":

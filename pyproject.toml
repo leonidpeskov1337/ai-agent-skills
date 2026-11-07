@@ -10,5 +10,5 @@ select = ["E4", "E7", "E9", "F"]
 "**/tests/*.py" = ["E402"]
 
 [tool.pytest.ini_options]
-testpaths = ["tools/tests", "kubernetes-troubleshooter/tests", "gitlab-security-policies/tests"]
+norecursedirs = [".*", "venv", ".git", ".venv", ".ci-*", "node_modules", "dist", "*-workspace", "tools/vendor"]
 addopts = "--import-mode=importlib -ra"

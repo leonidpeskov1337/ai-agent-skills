@@ -60,15 +60,15 @@ python -m unittest discover -s kubernetes-troubleshooter/tests -v
 python tools/package_skill.py
 ```
 
-Run these from the repository root. Packaging uses only the standard library,
+Run these from the repository root. Packaging uses the repository development dependencies,
 includes a single top-level skill folder, excludes caches and working evaluation runs, and writes
-`dist/kubernetes-troubleshooter.skill` plus SHA-256. Synthetic tests/evals are included.
+`dist/kubernetes-troubleshooter.skill` plus SHA-256. Development tests/evals stay in the repository; use `--include-dev` to include them.
 For formal frontmatter validation use the host Skill Creator `quick_validate.py` or
 Anthropic's same-named validator; those developer tools require PyYAML.
 
-See [evaluation scenarios](evals/evals.json), [offline fixtures](evals/fixtures.json),
-[evaluation results](evals/results.md) and [worked reports](examples/investigations.md).
-The upgrade adds [incident-pattern evaluation scenarios](evals/real-incident-evals.json)
+See [evaluation scenarios](https://github.com/leonidpeskov1337/ai-agent-skills/blob/main/kubernetes-troubleshooter/evals/evals.json), [offline fixtures](https://github.com/leonidpeskov1337/ai-agent-skills/blob/main/kubernetes-troubleshooter/evals/fixtures.json),
+[evaluation results](https://github.com/leonidpeskov1337/ai-agent-skills/blob/main/kubernetes-troubleshooter/evals/results.md) and [worked reports](examples/investigations.md).
+The upgrade adds [incident-pattern evaluation scenarios](https://github.com/leonidpeskov1337/ai-agent-skills/blob/main/kubernetes-troubleshooter/evals/real-incident-evals.json)
 and [user-supplied sanitized case summaries](examples/real-incident-patterns.md).
 Probe projections keep timing, handler shape and HTTP paths while omitting exec
 commands, HTTP header values and URL query/fragment values. They are deliberately

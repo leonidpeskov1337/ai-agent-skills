@@ -48,10 +48,9 @@ python -m ruff format --check tools --exclude tools/vendor
 yamllint .
 npm run lint:markdown
 npm run test:policy
-python -m tools.package_skill kubernetes-troubleshooter
-python -m tools.package_skill gitlab-security-policies
 python -m tools.install_binary actionlint
 python -m tools.install_binary gitleaks
+python -m tools.package_skill --scan-secrets
 # POSIX binary locations; append .exe on Windows:
 .ci-bin/actionlint/actionlint
 zizmor --offline .github/workflows
@@ -70,15 +69,17 @@ Optional local hooks: use [Husky](https://typicode.github.io/husky/) with a
 a reviewed version locally. Hooks improve feedback but can be bypassed; required
 PR checks and approved GitHub rules provide the merge boundary.
 
-## Skill creation checklist
+## Add a skill
 
-- Create a root skill folder with `SKILL.md`, a matching name, and a clear description.
-- Discovery, validation, packaging and release automatically find root skill folders.
-- Use resources only when needed; there is no required Markdown heading layout.
-- Keep relative links within the skill; include referenced files in its package.
-- Add synthetic evaluations with assertions and meaningful offline script tests.
-- Keep credentials, production access, caches and generated artifacts out of Git.
-- Package the skill independently and inspect the archive before publishing.
+1. Add `new-skill/SKILL.md` with a matching name and a clear description. Include
+   arbitrary runtime resources beneath it; optional Python tests belong in tests/.
+2. Run `python -m tools.validate_repo`, `python -m pytest` and
+   `python -m tools.package_skill new-skill --scan-secrets`. Normal pytest automatically
+   discovers new skills; no registry, workflow, pytest path or release manifest edit
+   is needed. See [package policy](docs/releases.md#runtime-package-policy) for exclusions.
+3. Open a conventional PR. After merge into protected main, passing CI automatically
+   versions and releases the affected skill. Keep credentials and generated files out
+   of Git; develop evaluations in evals/ without making paid runs mandatory.
 
 See [CI and governance](docs/ci-governance.md), [release instructions](docs/releases.md),
 and [evaluation instructions](docs/evaluations.md).
