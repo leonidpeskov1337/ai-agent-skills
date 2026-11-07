@@ -5,9 +5,14 @@ on Windows with Python 3.14.7 and Node 24.22.1. Hosted Linux results, if availab
 are recorded on the pull request; local validation alone does not prove hosted
 workflow execution or live branch protection.
 
+[Hosted Ubuntu 24.04 CI run 42366960185](https://github.com/leonidpeskov1337/ai-agent-skills/actions/runs/42366960185)
+passed all seven jobs: PR policy, structure/package, code quality, security, both
+skill test jobs and Validation gate. The first run caught an unsupported commitlint
+CLI option and a ShellCheck glob warning; both were fixed and verified in that run.
+
 ## Passed locally
 
-- Full pytest suite: **114 tests and 33 subtests passed**, including existing skill tests and repository negative fixtures.
+- Full pytest suite: **124 tests and 33 subtests passed**, including existing skill tests and repository negative fixtures.
 - **Four Node policy tests passed**, including invalid middle commit with a valid tip and the actual strict PR-title configuration.
 - Official pinned Anthropic validator and supplementary checks for both skills.
 - Ruff lint across Python sources and formatting of shared tooling.
@@ -43,6 +48,7 @@ Patched explicit overrides resolved the findings; Markdown lint still passes.
 | Provider timeout in mocked model adapter | Saved infrastructure failure report; job failed |
 | Missing model API key | Runner refused execution before any model call |
 | Root documentation-only diff | Selected no skill tests; shared tooling selected both |
+| Actual gate shell with successful, skipped, failed or cancelled dependencies | Ten scenarios passed; intentional docs skips accepted, invalid states failed |
 | Invalid skill release tag, shell-like input or leading-zero version | Rejected |
 
 ## Not executed or not enforced
