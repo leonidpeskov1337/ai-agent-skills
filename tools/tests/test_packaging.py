@@ -55,6 +55,14 @@ def test_arbitrary_resources_and_reproducibility(runtime_skill, tmp_path):
         assert {p.removeprefix("third-skill/") for p in archive.namelist()} == expected
 
 
+def test_encoded_resource_reference_decodes_once(runtime_skill, tmp_path):
+    (runtime_skill / "assets/literal%20name.dat").write_bytes(b"data")
+    (runtime_skill / "references/guide.md").write_text(
+        "[Encoded filename](../assets/literal%2520name.dat)\n"
+    )
+    package(runtime_skill, tmp_path / "out")
+
+
 @pytest.mark.parametrize(
     "name",
     [

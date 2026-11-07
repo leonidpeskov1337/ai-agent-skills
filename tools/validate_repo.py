@@ -183,7 +183,7 @@ def relative_references(path):
             url = token.attrGet("href") if token.type == "link_open" else token.attrGet("src")
             parts = urlsplit(url)
             if not parts.scheme and not parts.netloc and parts.path:
-                yield unquote(parts.path)
+                yield parts.path
 
 
 def main():
