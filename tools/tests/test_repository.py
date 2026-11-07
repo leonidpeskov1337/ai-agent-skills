@@ -9,7 +9,6 @@ from jsonschema import ValidationError
 
 from tools.changed_skills import select
 from tools.package_skill import package, verify
-from tools.release_target import parse_tag
 from tools.validate_repo import load_json, skills, validate_files, validate_skill
 
 
@@ -51,11 +50,10 @@ def test_missing_skill(skill):
         validate_skill(skill)
 
 
-def test_deleted_registered_skill(tmp_path):
-    (tmp_path / "tools").mkdir()
-    (tmp_path / "tools/skills.json").write_text('{"skills":["missing-skill"]}')
-    with pytest.raises(ValueError, match="registry"):
-        skills(tmp_path)
+def test_new_skill_discovered_validated_and_packaged(skill, tmp_path):
+    assert skills(tmp_path) == [skill.name]
+    validate_skill(skill)
+    assert package(skill, tmp_path / "dist").exists()
 
 
 def test_file_links_and_code_examples(skill):
@@ -156,16 +154,3 @@ def test_change_detection():
     assert select([".github/workflows/ci.yml"], names) == names
     assert select(["a-skill/README.md"], names) == ["a-skill"]
     assert select(["new-skill/SKILL.md"], names) == names
-
-
-@pytest.mark.parametrize("tag", ["a-skill/v1.2.3", "a-skill/v0.0.1"])
-def test_release_tag_accepts_registered_skill(tag):
-    assert parse_tag(tag, ["a-skill"]) == "a-skill"
-
-
-@pytest.mark.parametrize(
-    "tag", ["other/v1.2.3", "a-skill/v01.2.3", "a-skill/v1.2", "$(touch bad)", "--help"]
-)
-def test_release_tag_rejects_untrusted_input(tag):
-    with pytest.raises(ValueError):
-        parse_tag(tag, ["a-skill"])

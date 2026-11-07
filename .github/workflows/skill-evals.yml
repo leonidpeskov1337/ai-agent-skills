@@ -4,8 +4,7 @@ on:
     inputs:
       skill:
         description: Skill to evaluate against paired synthetic cases
-        type: choice
-        options: [kubernetes-troubleshooter, gitlab-security-policies]
+        type: string
         required: true
 permissions:
   contents: read

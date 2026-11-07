@@ -18,7 +18,10 @@ from tools.validate_repo import ROOT, load_json, skills
 
 
 def evaluate(skill, cli, output):
-    cases = load_json(ROOT / "tools/model_cases.json")[skill]
+    case_file = ROOT / skill / "evals/model-cases.json"
+    if not case_file.exists():
+        raise SystemExit(f"No optional model cases supplied for {skill}")
+    cases = load_json(case_file)
     output.mkdir(parents=True, exist_ok=True)
     results = []
     failed = False

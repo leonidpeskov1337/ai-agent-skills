@@ -24,5 +24,5 @@ written to `dist/`.
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for branch conventions, Conventional Commits
 and local checks. [CI and governance](docs/ci-governance.md) describes validation,
 security checks and the GitHub settings that require administrator approval.
-[Releases](docs/releases.md) and [model evaluations](docs/evaluations.md) are manual,
-trusted-ref workflows and start disabled until configured.
+[Releases](docs/releases.md) and [model evaluations](docs/evaluations.md) use trusted refs. Releases run automatically after successful main CI; paid model
+evaluations remain opt-in.
