@@ -1,8 +1,7 @@
 # Contributing
 
 Use short-lived branches and pull requests against the current default branch.
-GitHub currently uses `main`; the requested move to `master` is an administrator
-decision. Workflows support both during that transition. There is no `develop` branch.
+The protected default branch is `main`. There is no `develop` branch.
 
 ## Local workflow
 
@@ -59,7 +58,7 @@ zizmor --offline .github/workflows
 .ci-bin/gitleaks/gitleaks git --redact --no-banner
 .ci-bin/gitleaks/gitleaks dir --redact --no-banner --config .gitleaks.toml .
 pip-audit --disable-pip --no-deps -r requirements-ci.txt
-npm audit --audit-level=moderate
+npm run audit
 ```
 
 Linting checks code and structural formatting; spelling and grammar are not enforced.

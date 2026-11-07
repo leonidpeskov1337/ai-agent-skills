@@ -1,5 +1,9 @@
 # Implementation verification
 
+This records the initial implementation. [The CI audit](ci-audit.md) and
+[current governance guide](ci-governance.md) supersede registry, manual-release and
+disabled-protection statements below.
+
 Verification date: 2026-11-07. Commands used the pinned development dependencies
 on Windows with Python 3.14.7 and Node 24.22.1. Hosted Linux results, if available,
 are recorded on the pull request; local validation alone does not prove hosted

@@ -17,7 +17,7 @@ import {discover, relevant, analyzeCommits} from '../skill-release.mjs';
   git('add','.');git('commit','-m','feat: add third skill');git('remote','add','origin',remote);git('push','-u','origin','main');
   const env=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.startsWith('GITHUB') && !['CI','GITLAB_CI'].includes(k)));
   Object.assign(env,{GIT_AUTHOR_NAME:'Test',GIT_AUTHOR_EMAIL:'test@example.invalid',GIT_COMMITTER_NAME:'Test',GIT_COMMITTER_EMAIL:'test@example.invalid'});
-  const options={ci:false,branches:['main'],repositoryUrl:remote.replaceAll('\\','/'),tagFormat:'third-skill/v${version}',plugins:[join(original,'node_modules/@semantic-release/commit-analyzer/index.js')]};
+  const options={ci:false,branches:['main'],repositoryUrl:remote.replaceAll('\\','/'),tagFormat:'third-skill/v${version}',plugins:[[join(original,'node_modules/@semantic-release/commit-analyzer/index.js'),{preset:'conventionalcommits'}],[join(original,'node_modules/@semantic-release/release-notes-generator/index.js'),{preset:'conventionalcommits'}]]};
   const first=await release(options,{cwd:work,env});assert.equal(first.nextRelease.version,'1.0.0');
   assert.equal(git('tag','--list','third-skill/v*'),'third-skill/v1.0.0');
   assert.equal(await release(options,{cwd:work,env}),false);

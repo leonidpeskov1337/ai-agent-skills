@@ -1,158 +1,96 @@
 # CI architecture and repository governance
 
-## Discovery and gap analysis
+## Active GitHub settings
 
-GitHub API inspection on 2026-11-07 confirmed `main` as the default branch,
-public visibility, and an empty repository ruleset list. Subsequent authenticated
-admin reads confirmed no classic protection on `main` (404), only the owner as a
-direct collaborator, and no environments. All three merge methods are enabled and
-merged branches are not automatically deleted. Actions defaults already use a
-read-only token and cannot approve PR reviews. No live settings were changed.
-The account billing plan was not inspected.
+Main is protected by native ruleset 26754711: PRs and a successful **Validation gate**
+are required, branches must be up to date, conversations resolved and history linear.
+Deletion and force pushes are blocked, with no bypass actors. Only the owner is a
+direct collaborator, so independent approval count is zero. Squash merging is the
+only merge method, PR titles form squash subjects, and merged branches are deleted.
+Actions defaults use read-only tokens and cannot approve PR reviews.
 
-Before this change the repository had two root skills, Python standard-library
-helpers, 81 offline tests, JSON incident/evaluation/report artifacts, and a
-deterministic Kubernetes-only packager. It had no Actions workflows, dependency
-locks, contribution policy or ruleset definitions. The existing skill directories
-and behavior are preserved; only two unused test imports were removed for linting.
+These settings were explicitly activated during the audit. Authenticated API reads
+confirmed enforcement, and an actual controlled direct push to main was rejected
+with GH013. The committed ruleset JSON records the active configuration. See
+[the audit](ci-audit.md) for the tool-by-tool decisions and verification limits.
 
-## Validation design
+## Workflow architecture
 
-| Responsibility | Implementation |
-| --- | --- |
-| PR branch, title, every commit | Reusable `pr-policy.yml`, commitlint, authenticated PR-author bot exceptions |
-| Metadata | Unmodified pinned Anthropic `quick_validate.py` plus minimal spec checks |
-| References and fixtures | CommonMark parser, JSON Schema, strict JSON parsing, YAML parsing |
-| Packages | Existing deterministic ZIP design extended to both skills, nested fixtures, integrity and SHA-256 checks |
-| Code quality | Ruff, pytest, yamllint, markdownlint-cli2, actionlint |
-| Security | zizmor, Gitleaks history and directory scans, pip-audit, npm audit, Dependabot |
-| Behavioral evaluation | Existing offline tests and optional paired real-agent tasks with human rubric review |
-| Mandatory merge result | **Validation gate**, which requires success from every applicable job |
+1. CI runs for every PR update and main push without workflow path filters.
+2. Reusable PR policy validates contributor branches, strict conventional PR titles,
+   and every introduced commit using the full base..head range and commitlint.
+3. Structure validation discovers root folders containing SKILL.md, validates them
+   and builds each independent package. No manually maintained registry exists.
+4. Skill tests are selected from a NUL-delimited Git diff. Shared/unknown paths
+   select all skills; root documentation-only changes select none. Optional test
+   directories run when present. A skill's Markdown changes still select its tests.
+5. Code quality runs Ruff, pytest, yamllint, Markdown structure lint and actionlint.
+   Security runs zizmor, redacted Gitleaks scans, pip-audit and the npm audit policy.
+6. The always-running Validation gate explicitly checks applicable success and
+   intentional skips. Failed, cancelled or unexpectedly skipped jobs fail it.
+7. Only successful main pushes invoke the reusable automatic release workflow.
+   Its condition explicitly tolerates the skipped PR-only policy job. Release
+   failure fails the overall run and can be retried; it does not falsify validation.
 
-CI runs on all PR updates without path filters, including title edits. Full-history
-checkout covers `base..head`, including earlier PR commits; commitlint handles
-generated merge/revert/version commits with its standard ignores. All PR jobs have
-read-only tokens, no persisted checkout credentials, and no application secrets.
-There is no `pull_request_target` execution. PR content enters shell commands only
-through quoted environment variables, and branch/title data is never evaluated as code.
+PR jobs receive read-only tokens and no production or paid-model credentials.
+Checkout does not persist credentials. Untrusted PR strings enter shells only as
+quoted environment variables. There is no pull_request_target or privileged
+workflow_run execution. Only the trusted main release job receives contents:write.
+Paid model evaluations remain manually enabled on trusted refs.
 
-Skill-specific tests use a NUL-delimited Git diff; shared or unknown paths select
-both skills. Root/docs-only Markdown changes skip skill tests but still run structure,
-packaging, quality and security. Changes within a skill select its tests even for
-Markdown because skill prose is executable agent guidance. No normal PR invokes a
-paid model. The always-running gate explicitly accepts skipped skill tests only
-when detection selected none. A failed/cancelled dependency fails the gate. Use
-**Validation gate** as the single required status; matrix job names can evolve.
+Concurrency cancels superseded CI runs. Releases use a separate non-cancelling
+concurrency group. Dependency caches are disabled; installations use integrity locks.
+No spelling or grammar enforcement is configured.
 
-Concurrency cancels superseded PR runs. No dependency cache is used initially:
-installations are small, locks are integrity checked, and there is no cross-trust
-cache to poison. Consider cache additions only after measuring run time.
+## Skill discovery and local tooling
 
-The official validator does not enforce nonempty values, directory/name equality,
-relative links, evaluation schemas or archive safety. Supplementary checks cover
-these gaps with negative tests. They do not impose headings. Markdown file links
-are parsed outside code examples; external URLs and heading anchors are outside
-the offline check. Evaluation suites validate IDs, references and assertion shape;
-historical reports remain distinct JSON artifacts, not claims of new model runs.
-Description relevance and prose quality still require maintainer review.
+Add `new-skill/SKILL.md` with matching metadata. Optional scripts, references, tests
+and evaluations stay within that folder. Discovery, validation, packaging and release
+require no central edits. Optional paid model cases belong in evals/model-cases.json.
+Run `python -m tools.validate_repo`, `python -m pytest`, `npm run test:policy`, and
+`python -m tools.package_skill` to validate and package all discovered skills locally.
 
-The pinned upstream packager was inspected. It recursively copies files and omits
-root `evals/`, whereas this repository distributes its evaluation fixtures. Reusing
-the existing packager preserves that behavior while adding independent skill input,
-nested resources, safe input restrictions and archive verification. Packages include
-tests/evaluations intentionally. Gitleaks checks source before release; a checksum
-proves integrity, not absence of secrets or publisher authenticity.
+The unmodified pinned Anthropic validator supplies metadata validation. Minimal
+supplementary checks cover nonempty fields, name/directory agreement, duplicate
+YAML/JSON keys, relative resources, evaluation schemas and archive safety. Markdown
+links are parsed outside code examples. External URLs and heading anchors are not
+checked offline; description relevance remains a maintainer review responsibility.
+No heading structure is prescribed. Historical evaluation reports are not new model
+runs merely because their JSON passes validation.
 
-## Proposed GitHub setup — requires administrator approval
+The original deterministic packager is retained and generalized. It includes tests
+and evaluations, unlike the upstream packager's default evals exclusion, and verifies
+ZIP contents and checksums. Development dependencies are not bundled into skills.
 
-The JSON under [.github/governance](../.github/governance/default-branch.ruleset.json)
-is a disabled proposal, not evidence of enforcement. It targets `~DEFAULT_BRANCH`
-so it survives an approved rename from `main` to `master`.
+## Maintaining the system
 
-1. Review this change through a PR and confirm a successful **Validation gate**.
-2. Decide whether to rename `main` to `master` in repository Settings → Branches.
-   Update existing PR bases, local tracking and default-branch links after renaming.
-   Workflows already accept both names; keep only the chosen trunk long term.
-3. Apply the proposed [repository merge settings](../.github/governance/repository-settings.json):
-   squash only, PR-title squash subjects, automatic merged-branch deletion.
-4. Import the disabled ruleset, select **Validation gate** from an actual run, and
-   verify GitHub Actions is its expected source (integration ID 15368). Require an
-   up-to-date branch, resolved conversations, linear history, PRs, no deletion or
-   force push, and no routine bypass actors. Activate only after reviewing the API
-   response and UI. Do not add a blanket restricted-updates rule with no bypass:
-   that would also block the desired merges.
-5. The proposal uses zero mandatory approvals for a solo maintainer. When an
-   independent maintainer is confirmed, change approval count to one and consider
-   CODEOWNERS for `.github/`, `tools/`, locks and skill scripts. Enable stale-review
-   dismissal and last-push approval only when independent review is satisfiable.
-6. Set default Actions token permission to read-only, allow only reviewed actions,
-   and require approval for outside-contributor workflow runs. Workflow, lock and
-   policy changes require particular scrutiny: ordinary repo-controlled checks can
-   themselves be edited by a PR. A required trusted workflow policy, where the plan
-   supports it, strengthens this boundary.
-7. Configure the protected `release` and `model-evals` environments, restricted to
-   the default branch, before enabling their repository variables. See the linked
-   release and evaluation guides. No production credentials belong in this repo.
-8. Re-read rulesets and classic branch protection with authenticated admin access,
-   verify API responses, then test an invalid PR, a direct push, force push and
-   deletion using a disposable branch/repository. Do not perform destructive tests
-   against the actual trunk. Record the observed results before claiming enforcement.
+- Python: edit requirements-ci.in and regenerate requirements-ci.txt with Python
+  3.14 and pip-tools 7.6.2 using hash generation, then run pip-audit and tests.
+- Node: regenerate package-lock.json with installation scripts disabled and run
+  `npm run audit`. The audit documents exact exceptions for two advisories in
+  semantic-release's unused bundled npm publisher; it does not claim zero advisories.
+- Actions: review Dependabot SHA updates and runtime/permission changes.
+- Binaries: review release artifacts and checksums before editing tools/binaries.json.
+- Anthropic: review a specific upstream commit, preserve its license and exact
+  bytes, update UPSTREAM.json digests, and rerun negative tests.
+- Release preset/writer upgrades: run the initial-tag integration test, including
+  actual release-note rendering, before merging. See [releases](releases.md).
 
-[GitHub documents rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets)
-for public repositories on Free, including personal public repos. The actual
-account plan and availability of advanced metadata restrictions remain unverified.
-If Settings → Rules → Rulesets offers branch-name metadata restrictions, apply the
-same prefix pattern as `tools/branch_policy.cjs`, with explicit bot exceptions and
-exclusions for trunk. Native restrictions apply only to this repository's branches;
-the PR check is still needed for forks. Do not activate an unconditional pattern
-that blocks trunk or approved automation.
+Sensitive workflow/lock/governance changes need particular review because ordinary
+repo-controlled checks can themselves be edited by a PR. Native metadata restrictions
+are plan-dependent; GitHub documents additional controls for Enterprise organizations.
+This personal repository enforces branch names and commits through its PR checks.
+Unprotected development branches can contain invalid commits, but those cannot pass
+an intact required gate. Local hooks remain optional developer conveniences.
 
-GitHub's Enterprise documentation limits additional commit metadata controls to
-Enterprise organizations; this personal repository uses PR policy checks. The
-branch regex is `^(feature|fix|skill|refactor|docs|test|ci|chore|security)/[a-z0-9]+(-[a-z0-9]+)*$`.
-Bot exceptions require separate identity-aware policy; do not allow every human to
-use automation prefixes merely to satisfy a native regex.
+For another maintainer, require independent approval and consider CODEOWNERS for
+.github/, tools/, locks and skill scripts. Do not make solo review impossible.
 
-Native commit-message metadata rules, where available, can restrict server-side pushes.
-They use regex semantics and do not replace commitlint; account for generated merge,
-revert and automation messages before activation. Without these native restrictions,
-invalid commits can be pushed to development branches but cannot satisfy an intact
-required PR gate. GitHub Actions YAML alone does not protect a branch.
+## Troubleshooting
 
-## Updating dependencies and upstream tooling
-
-- Python: edit `requirements-ci.in`, use Python 3.14 and `pip-tools==7.6.2`, then run
-  `pip-compile --generate-hashes --strip-extras --output-file requirements-ci.txt requirements-ci.in`.
-  Verify the lock installs on Linux as well as Windows; re-run pip-audit.
-- Node: use Node 24 and `npm install --ignore-scripts` to refresh `package-lock.json`.
-  Update the separate optional-model lock in `.github/model-evals` independently.
-- Actions: Dependabot proposes SHA updates. Review upstream release notes and
-  action permissions/runtime before merging.
-- Binary tools: update the versioned upstream release URLs and archive SHA-256
-  values in `tools/binaries.json`; verify published checksum lists and releases.
-  Installer extracts only the named executable after hash verification.
-- Anthropic validator: review a specific upstream commit, copy only the validator
-  and its Apache license, update `UPSTREAM.json` digests, and run negative tests.
-  CI never downloads code from upstream's moving branch.
-
-Dependabot updates require matching hash/integrity locks; CI fails inconsistent
-updates. No blanket advisory suppression or secret-scan baseline is configured.
-
-## Troubleshooting CI
-
-- **PR policy**: check branch prefix, every introduced commit, and PR title. Rebase
-  or fix commit messages on the development branch; do not force-push trunk.
-- **Structure**: use the reported file/reference/schema error. Register new skills;
-  do not silently remove registry entries to hide a missing `SKILL.md`.
-- **Tests**: run the selected skill tests locally. Kubernetes tests use loopback
-  mock HTTP servers, never live cluster endpoints. Restricted desktops may need
-  local execution permission for subprocesses and loopback sockets.
-- **Security**: fix the finding. For an intentional fixture, narrowly document and
-  test an exception; never exclude all skill scripts or workflows.
-- **Gate skipped or failing**: inspect upstream jobs. Do not remove `always()` or
-  add workflow path filters. External advisory outages are infrastructure failures.
-- **Manual workflows skipped**: check default ref, enablement variable and protected
-  environment setup; an intentional skip is not a successful evaluation or release.
-
-See [tool research](tooling-research.md), [evaluations](evaluations.md),
-[releases](releases.md), and [verification record](verification.md).
+Run the same check locally and use its file/schema/advisory diagnostic. Do not hide
+failures by removing the gate's always() condition, adding workflow path filters or
+broadening secret/audit exceptions. Advisory-service outages are infrastructure
+failures. Kubernetes helper tests use loopback mocks; restricted desktop sandboxes
+may require execution permission for subprocesses and sockets. No cluster access is
+needed. Manual release recovery is available on main; no hand-created tag is required.
