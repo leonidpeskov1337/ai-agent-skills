@@ -1,0 +1,155 @@
+name: CI
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  policy:
+    if: github.event_name == 'pull_request'
+    # Same-commit syntax documented by GitHub; actionlint 1.7.12 does not accept $/ yet.
+    uses: ./.github/workflows/pr-policy.yml # zizmor: ignore[self-repository]
+    permissions:
+      contents: read
+  structure:
+    name: Structure and package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      matrix: ${{ steps.changes.outputs.matrix }}
+      has-skills: ${{ steps.changes.outputs.has-skills }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - run: python -m pip install --require-hashes -r requirements-ci.txt
+      - run: python -m tools.validate_repo
+      - run: python -m pytest tools/tests -q
+      - name: Package all skills independently
+        run: |
+          python -m tools.package_skill kubernetes-troubleshooter
+          python -m tools.package_skill gitlab-security-policies
+      - name: Select affected skill tests
+        id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [ "$EVENT_NAME" = 'pull_request' ]; then
+            matrix=$(python -m tools.changed_skills "$BASE_SHA" "$HEAD_SHA")
+          else
+            matrix='{"skill":["kubernetes-troubleshooter","gitlab-security-policies"]}'
+          fi
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          if [ "$matrix" = '{"skill":[]}' ]; then
+            echo 'has-skills=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'has-skills=true' >> "$GITHUB_OUTPUT"
+          fi
+  tests:
+    name: Skill tests (${{ matrix.skill }})
+    needs: structure
+    if: needs.structure.outputs.has-skills == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.structure.outputs.matrix) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - run: python -m pip install --require-hashes -r requirements-ci.txt
+      - name: Offline skill tests
+        env:
+          SKILL: ${{ matrix.skill }}
+        run: python -m pytest "$SKILL/tests" -q
+  quality:
+    name: Code quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: python -m pip install --require-hashes -r requirements-ci.txt
+      - run: npm ci --ignore-scripts
+      - run: python -m ruff check .
+      - run: python -m ruff format --check tools --exclude tools/vendor
+      - run: yamllint .
+      - run: npm run lint:markdown
+      - run: npm run test:policy
+      - run: python -m tools.install_binary actionlint
+      - run: .ci-bin/actionlint/actionlint -color
+      - run: python -m tools.install_binary gitleaks
+      - run: python -m pytest tools/tests/test_external_checks.py -q
+  security:
+    name: Security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: python -m pip install --require-hashes -r requirements-ci.txt
+      - run: zizmor --offline .github/workflows
+      - run: python -m tools.install_binary gitleaks
+      - run: .ci-bin/gitleaks/gitleaks git --redact --no-banner
+      - run: .ci-bin/gitleaks/gitleaks dir --redact --no-banner --config .gitleaks.toml .
+      - run: pip-audit --disable-pip --no-deps -r requirements-ci.txt
+      - run: npm audit --audit-level=moderate
+  gate:
+    name: Validation gate
+    if: always()
+    needs: [policy, structure, tests, quality, security]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require every applicable check
+        env:
+          POLICY: ${{ needs.policy.result }}
+          STRUCTURE: ${{ needs.structure.result }}
+          TESTS: ${{ needs.tests.result }}
+          QUALITY: ${{ needs.quality.result }}
+          SECURITY: ${{ needs.security.result }}
+          EVENT_NAME: ${{ github.event_name }}
+          HAS_SKILLS: ${{ needs.structure.outputs.has-skills }}
+        run: |
+          test "$STRUCTURE" = success
+          test "$QUALITY" = success
+          test "$SECURITY" = success
+          if [ "$EVENT_NAME" = pull_request ]; then test "$POLICY" = success; fi
+          if [ "$HAS_SKILLS" = true ]; then
+            test "$TESTS" = success
+          else
+            test "$TESTS" = skipped
+          fi

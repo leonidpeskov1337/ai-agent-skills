@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.skill binary
+*.png binary
+*.jpg binary
+# Preserve exact upstream bytes, including whitespace, for integrity verification.
+tools/vendor/anthropic/quick_validate.py -whitespace

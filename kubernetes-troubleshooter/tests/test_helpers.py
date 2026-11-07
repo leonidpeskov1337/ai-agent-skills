@@ -1,8 +1,6 @@
 """Offline transport, safety and analysis behavior tests; no live credentials."""
 import json
-import os
 from pathlib import Path
-import subprocess
 import sys
 import threading
 import time

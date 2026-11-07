@@ -4,3 +4,9 @@ __pycache__/
 .venv/
 dist/
 *-workspace/
+node_modules/
+.ci-*
+.pytest_cache/
+.ruff_cache/
+.coverage
+model-results/

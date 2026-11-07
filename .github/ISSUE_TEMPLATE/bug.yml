@@ -1,0 +1,19 @@
+name: Bug report
+description: Report a reproducible skill or helper problem using sanitized evidence
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and observed behavior
+      description: Include the skill, revision, runtime and a minimal reproduction.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence
+      description: Use synthetic examples. Never include tokens, kubeconfigs or private logs.
+  - type: textarea
+    id: validation
+    attributes:
+      label: Checks already performed

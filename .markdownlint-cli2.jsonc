@@ -1,0 +1,18 @@
+{
+  "globs": ["**/*.md"],
+  "ignores": ["node_modules/**", "dist/**", "*-workspace/**", ".ci-*/**", "tools/vendor/**"],
+  "config": {
+    "default": false,
+    "MD009": true,
+    "MD010": true,
+    "MD011": true,
+    "MD012": { "maximum": 3 },
+    "MD014": true,
+    "MD018": true,
+    "MD019": true,
+    "MD023": true,
+    "MD037": true,
+    "MD038": true,
+    "MD039": true
+  }
+}

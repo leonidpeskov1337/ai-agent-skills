@@ -1,0 +1,19 @@
+{
+  "name": "ai-agent-skills-tooling",
+  "private": true,
+  "engines": { "node": ">=24.0.0" },
+  "scripts": {
+    "lint:markdown": "markdownlint-cli2",
+    "lint:commits": "commitlint --verbose",
+    "test:policy": "node --test tools/tests/policy.test.cjs"
+  },
+  "overrides": {
+    "markdownlint": "0.42.1",
+    "katex": "0.18.2"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4",
+    "markdownlint-cli2": "0.24.0"
+  }
+}
