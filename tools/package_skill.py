@@ -193,6 +193,7 @@ def package(skill, output, include_dev=False, scan_secrets=False):
                 f"{skill.name}/{path.relative_to(skill).as_posix()}", (2026, 1, 1, 0, 0, 0)
             )
             info.compress_type = zipfile.ZIP_DEFLATED
+            info.create_system = 3
             info.external_attr = 0o100644 << 16
             archive.writestr(info, data)
     verify(archive_path, skill, include_dev)
