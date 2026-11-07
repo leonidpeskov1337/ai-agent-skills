@@ -66,13 +66,9 @@ def load_json(path):
 
 
 def skills(root=ROOT):
-    registered = load_json(root / "tools/skills.json")["skills"]
-    discovered = {
+    return sorted(
         p.parent.name for p in root.glob("*/SKILL.md") if not ignored(p.relative_to(root))
-    }
-    if set(registered) != discovered:
-        raise ValueError(f"Skill registry differs from discovery: {set(registered) ^ discovered}")
-    return registered
+    )
 
 
 def official_validator():
@@ -188,7 +184,7 @@ def validate_file(root, path, parser):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--skill", choices=load_json(ROOT / "tools/skills.json")["skills"])
+    parser.add_argument("--skill", choices=skills())
     args = parser.parse_args()
     names = skills()
     for name in [args.skill] if args.skill else names:

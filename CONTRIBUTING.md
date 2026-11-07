@@ -74,8 +74,7 @@ PR checks and approved GitHub rules provide the merge boundary.
 ## Skill creation checklist
 
 - Create a root skill folder with `SKILL.md`, a matching name, and a clear description.
-- Register it in [tools/skills.json](tools/skills.json); update test/package workflows
-  and model workflow choices for the added skill.
+- Discovery, validation, packaging and release automatically find root skill folders.
 - Use resources only when needed; there is no required Markdown heading layout.
 - Keep relative links within the skill; include referenced files in its package.
 - Add synthetic evaluations with assertions and meaningful offline script tests.

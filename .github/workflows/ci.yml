@@ -3,7 +3,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited, ready_for_review]
   push:
-    branches: [main, master]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -37,8 +37,7 @@ jobs:
       - run: python -m pytest tools/tests -q
       - name: Package all skills independently
         run: |
-          python -m tools.package_skill kubernetes-troubleshooter
-          python -m tools.package_skill gitlab-security-policies
+          python -m tools.package_skill
       - name: Select affected skill tests
         id: changes
         env:
@@ -49,7 +48,7 @@ jobs:
           if [ "$EVENT_NAME" = 'pull_request' ]; then
             matrix=$(python -m tools.changed_skills "$BASE_SHA" "$HEAD_SHA")
           else
-            matrix='{"skill":["kubernetes-troubleshooter","gitlab-security-policies"]}'
+            matrix=$(python -c 'import json; from tools.validate_repo import skills; print(json.dumps({"skill": skills()}, separators=(",", ":")))')
           fi
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
           if [ "$matrix" = '{"skill":[]}' ]; then
@@ -77,7 +76,8 @@ jobs:
       - name: Offline skill tests
         env:
           SKILL: ${{ matrix.skill }}
-        run: python -m pytest "$SKILL/tests" -q
+        run: |
+          if [ -d "$SKILL/tests" ]; then python -m pytest "$SKILL/tests" -q; fi
   quality:
     name: Code quality
     runs-on: ubuntu-24.04
@@ -126,7 +126,8 @@ jobs:
       - run: .ci-bin/gitleaks/gitleaks git --redact --no-banner
       - run: .ci-bin/gitleaks/gitleaks dir --redact --no-banner --config .gitleaks.toml .
       - run: pip-audit --disable-pip --no-deps -r requirements-ci.txt
-      - run: npm audit --audit-level=moderate
+      - run: npm ci --ignore-scripts
+      - run: npm run audit
   gate:
     name: Validation gate
     if: always()
@@ -153,3 +154,9 @@ jobs:
           else
             test "$TESTS" = skipped
           fi
+  release:
+    needs: gate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/release.yml # zizmor: ignore[self-repository]
+    permissions:
+      contents: write

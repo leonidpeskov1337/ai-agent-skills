@@ -10,7 +10,7 @@ import zipfile
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tools.validate_repo import ROOT, ignored, load_json, validate_skill
+from tools.validate_repo import ROOT, ignored, skills, validate_skill
 
 FOLDERS = {
     "agents",
@@ -23,7 +23,27 @@ FOLDERS = {
     "ArgoCD",
     "assets",
 }
-SUFFIXES = {".md", ".py", ".json", ".yaml", ".yml", ".txt", ".svg", ".png", ".jpg"}
+SUFFIXES = {
+    ".md",
+    ".py",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".txt",
+    ".svg",
+    ".png",
+    ".jpg",
+    ".sh",
+    ".ps1",
+    ".js",
+    ".mjs",
+    ".cjs",
+    ".ts",
+    ".toml",
+    ".csv",
+    ".html",
+    ".css",
+}
 
 
 def package(skill, output):
@@ -87,12 +107,13 @@ def main():
     parser.add_argument(
         "skill",
         nargs="?",
-        default="kubernetes-troubleshooter",
-        choices=load_json(ROOT / "tools/skills.json")["skills"],
+        default=None,
+        choices=skills(),
     )
     parser.add_argument("--output", type=Path, default=ROOT / "dist")
     args = parser.parse_args()
-    package(ROOT / args.skill, args.output)
+    for name in [args.skill] if args.skill else skills():
+        package(ROOT / name, args.output)
 
 
 if __name__ == "__main__":
