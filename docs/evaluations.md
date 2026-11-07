@@ -24,7 +24,7 @@ Only the built-in Read tool is available; shell/write/network/MCP/cluster tools 
 absent, and repository/user customizations are disabled. No kubeconfig, GitLab
 token, deployment repository or production environment is supplied.
 
-Cases in `tools/model_cases.json` exercise missing telemetry, config-change
+Cases in each skill's `evals/model-cases.json` exercise missing telemetry, config-change
 correlation, query completeness, malicious log instructions and read-only boundaries.
 Each call has a $1 stop budget, eight-turn limit and 240-second timeout. One selected
 skill currently runs two calls. Provider enforcement can allow the final request to

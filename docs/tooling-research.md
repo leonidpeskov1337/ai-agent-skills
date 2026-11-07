@@ -1,5 +1,9 @@
 # Tooling research and pins
 
+This records the initial implementation. [The CI audit](ci-audit.md) and
+[current governance guide](ci-governance.md) supersede registry, manual-release and
+disabled-protection statements below.
+
 Research date: 2026-11-07. Upstream repository metadata, current source, release tags
 and licenses were inspected before adoption. Repositories below were not archived
 and showed activity during 2026; that is evidence of maintenance, not a security
