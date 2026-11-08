@@ -166,20 +166,24 @@ def validate_file(root, path, parser):
     elif path.suffix in {".yaml", ".yml"}:
         list(yaml.load_all(path.read_text(encoding="utf-8"), Loader=UniqueKeyLoader))
     elif path.suffix == ".md":
-        text = path.read_text(encoding="utf-8")
-        for block in parser.parse(text):
-            for token in block.children or []:
-                if token.type not in {"link_open", "image"}:
-                    continue
-                url = token.attrGet("href") if token.type == "link_open" else token.attrGet("src")
-                parts = urlsplit(url)
-                if parts.scheme or parts.netloc or not parts.path:
-                    continue
-                boundary = root
-                relative = path.relative_to(root)
-                if len(relative.parts) > 1 and (root / relative.parts[0] / "SKILL.md").exists():
-                    boundary = root / relative.parts[0]
-                require_path(path.parent, parts.path, boundary)
+        for reference in relative_references(path):
+            boundary = root
+            relative = path.relative_to(root)
+            if len(relative.parts) > 1 and (root / relative.parts[0] / "SKILL.md").exists():
+                boundary = root / relative.parts[0]
+            require_path(path.parent, reference, boundary)
+
+
+def relative_references(path):
+    """CommonMark file targets, outside illustrative fenced code blocks."""
+    for block in MarkdownIt().parse(path.read_text(encoding="utf-8")):
+        for token in block.children or []:
+            if token.type not in {"link_open", "image"}:
+                continue
+            url = token.attrGet("href") if token.type == "link_open" else token.attrGet("src")
+            parts = urlsplit(url)
+            if not parts.scheme and not parts.netloc and parts.path:
+                yield parts.path
 
 
 def main():

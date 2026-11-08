@@ -119,7 +119,7 @@ def test_eval_schema_and_references(skill):
         validate_skill(skill)
 
 
-def test_package_is_reproducible_and_includes_nested_fixture(skill, tmp_path):
+def test_package_is_reproducible_and_development_files_are_opt_in(skill, tmp_path):
     fixture = skill / "tests/fixtures/good.json"
     fixture.parent.mkdir(parents=True)
     fixture.write_text('{"safe":true}')
@@ -132,8 +132,11 @@ def test_package_is_reproducible_and_includes_nested_fixture(skill, tmp_path):
     digest = hashlib.sha256(first.read_bytes()).hexdigest()
     assert first.with_suffix(".skill.sha256").read_text().startswith(digest)
     with zipfile.ZipFile(first) as archive:
-        assert f"{skill.name}/tests/fixtures/good.json" in archive.namelist()
+        assert f"{skill.name}/tests/fixtures/good.json" not in archive.namelist()
         assert not any("__pycache__" in name for name in archive.namelist())
+    development = package(skill, tmp_path / "dev", include_dev=True)
+    with zipfile.ZipFile(development) as archive:
+        assert f"{skill.name}/tests/fixtures/good.json" in archive.namelist()
     with zipfile.ZipFile(first, "a") as archive:
         archive.writestr("../escape", "bad")
     with pytest.raises(ValueError):
@@ -154,3 +157,34 @@ def test_change_detection():
     assert select([".github/workflows/ci.yml"], names) == names
     assert select(["a-skill/README.md"], names) == ["a-skill"]
     assert select(["new-skill/SKILL.md"], names) == names
+
+
+@pytest.mark.parametrize(
+    "base,paths,expected,tooling",
+    [
+        ("base", ["README.md"], [], False),
+        ("base", ["a-skill/scripts/check.py"], ["a-skill"], False),
+        ("base", ["tools/shared.py"], ["a-skill", "b-skill"], True),
+        ("0" * 40, [], ["a-skill", "b-skill"], True),
+        ("all", [], ["a-skill", "b-skill"], True),
+    ],
+)
+def test_change_command_outputs(base, paths, expected, tooling, tmp_path, monkeypatch, capsys):
+    import subprocess
+    import sys
+    from tools import changed_skills
+
+    output = tmp_path / "output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+    monkeypatch.setattr(sys, "argv", ["changed_skills", base, "head"])
+    monkeypatch.setattr(changed_skills, "skills", lambda: ["a-skill", "b-skill"])
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *a, **kw: subprocess.CompletedProcess(
+            a, 0, ("\0".join(paths) + ("\0" if paths else "")).encode()
+        ),
+    )
+    changed_skills.main()
+    assert json.loads(capsys.readouterr().out) == {"skill": expected}
+    assert output.read_text() == f"tooling={str(tooling).lower()}\n"

@@ -20,11 +20,14 @@ with GH013. The committed ruleset JSON records the active configuration. See
 2. Reusable PR policy validates contributor branches, strict conventional PR titles,
    and every introduced commit using the full base..head range and commitlint.
 3. Structure validation discovers root folders containing SKILL.md, validates them
-   and builds each independent package. No manually maintained registry exists.
+   and packages affected skills with payload secret scanning. No manually maintained
+   registry exists.
 4. Skill tests are selected from a NUL-delimited Git diff. Shared/unknown paths
-   select all skills; root documentation-only changes select none. Optional test
+   select all skills on PRs and main pushes; root documentation-only changes select none. Optional test
    directories run when present. A skill's Markdown changes still select its tests.
-5. Code quality runs Ruff, pytest, yamllint, Markdown structure lint and actionlint.
+5. Code quality always runs Ruff, yamllint, Markdown structure lint and actionlint.
+   Shared tests, Node policy integration tests and external-linter self-tests run
+   for shared tooling/configuration/workflow changes, rather than every skill edit.
    Security runs zizmor, redacted Gitleaks scans, pip-audit and the npm audit policy.
 6. The always-running Validation gate explicitly checks applicable success and
    intentional skips. Failed, cancelled or unexpectedly skipped jobs fail it.
@@ -38,7 +41,7 @@ quoted environment variables. There is no pull_request_target or privileged
 workflow_run execution. Only the trusted main release job receives contents:write.
 Paid model evaluations remain manually enabled on trusted refs.
 
-Concurrency cancels superseded CI runs. Releases use a separate non-cancelling
+Concurrency cancels superseded PR runs; main runs finish their release operations. Releases use a separate non-cancelling
 concurrency group. Dependency caches are disabled; installations use integrity locks.
 No spelling or grammar enforcement is configured.
 
@@ -58,9 +61,10 @@ checked offline; description relevance remains a maintainer review responsibilit
 No heading structure is prescribed. Historical evaluation reports are not new model
 runs merely because their JSON passes validation.
 
-The original deterministic packager is retained and generalized. It includes tests
-and evaluations, unlike the upstream packager's default evals exclusion, and verifies
-ZIP contents and checksums. Development dependencies are not bundled into skills.
+The original deterministic packager is retained and generalized. It uses documented exclusions, omits development tests/evaluations by default,
+checks relative references against the actual payload, and verifies ZIP contents and
+checksums. Its deterministic output, resource limits and symlink safeguards exceed
+the inspected upstream packager; replacing it would remove those controls. Development dependencies are not bundled into skills.
 
 ## Maintaining the system
 

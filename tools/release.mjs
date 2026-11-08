@@ -21,10 +21,20 @@ for (const skill of discover()) {
   // Recover a tag created before a failed publish, without calculating another version.
   const tags = git('tag','--points-at','HEAD','--list',`${skill}/v*`).split('\n').filter(Boolean);
   if (tags.length) {
-    execFileSync('python',['-m','tools.package_skill',skill],{stdio:'inherit'});
+    const complete = tags.every(tag => {
+      try {
+        const {assets} = JSON.parse(execFileSync('gh',['release','view',tag,'--json','assets'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
+        return ['.skill','.skill.sha256'].every(suffix => assets.some(a => a.name === skill + suffix));
+      } catch { return false; }
+    });
+    if (complete) continue;
+    execFileSync('python',['-m','tools.package_skill',skill,'--scan-secrets'],{stdio:'inherit'});
     for (const tag of tags) publish(skill,tag);
     continue;
   }
+  // Skip network/history analysis for skills with no commits since their latest merged tag.
+  const latest = git('tag','--merged','HEAD','--list',`${skill}/v*`,'--sort=-version:refname').split('\n').filter(Boolean)[0];
+  if (latest && !git('log',`${latest}..HEAD`,'--format=%H','--',skill)) continue;
   const result = await semanticRelease({
     branches:['main'], tagFormat: `${skill}/v${'${version}'}`,
     plugins: [[ './tools/skill-release.mjs', {skill} ]],

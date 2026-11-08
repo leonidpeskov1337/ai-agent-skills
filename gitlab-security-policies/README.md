@@ -97,8 +97,8 @@ Script behaviour:
 | [references/](references/) | Design principles, policy authoring, measured GitLab behaviour, exceptions, delivery, runbooks, troubleshooting, developer communication, report template, sources |
 | [playbooks/](playbooks/index.md) | Symptom-driven investigation steps |
 | [scripts/](scripts/) | `lint_policy.py`, `survey_failed_jobs.py` |
-| [tests/](tests/) | Offline unit tests for the scripts |
-| [evals/](evals/evals.json) | Scenario prompts with assertions |
+| [tests/](https://github.com/leonidpeskov1337/ai-agent-skills/tree/main/gitlab-security-policies/tests/) | Offline unit tests for the scripts |
+| [evals/](https://github.com/leonidpeskov1337/ai-agent-skills/blob/main/gitlab-security-policies/evals/evals.json) | Scenario prompts with assertions |
 
 
 ## Validation
@@ -110,7 +110,7 @@ python -m unittest discover -s tests -v
 
 
 The tests are offline and use synthetic fixtures. They check the linter and classifier logic, not
-the agent's real-world accuracy. Use [evals](evals/evals.json) to assess reasoning. For formal
+the agent's real-world accuracy. Use [evals](https://github.com/leonidpeskov1337/ai-agent-skills/blob/main/gitlab-security-policies/evals/evals.json) to assess reasoning. For formal
 frontmatter validation, use the Skill Creator `quick_validate.py`.
 
 

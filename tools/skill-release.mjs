@@ -18,5 +18,5 @@ export async function generateNotes(config, context) {
   return notes({preset:"conventionalcommits"}, {...context, commits: relevant(config.skill, context.commits)});
 }
 export async function prepare(config) {
-  execFileSync('python', ['-m','tools.package_skill',config.skill], {stdio:'inherit'});
+  execFileSync('python', ['-m','tools.package_skill',config.skill,'--scan-secrets'], {stdio:'inherit'});
 }

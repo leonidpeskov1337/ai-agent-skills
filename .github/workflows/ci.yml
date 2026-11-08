@@ -9,7 +9,7 @@ permissions:
   contents: read
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   policy:
     if: github.event_name == 'pull_request'
@@ -24,6 +24,7 @@ jobs:
     outputs:
       matrix: ${{ steps.changes.outputs.matrix }}
       has-skills: ${{ steps.changes.outputs.has-skills }}
+      tooling: ${{ steps.changes.outputs.tooling }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -34,10 +35,6 @@ jobs:
           python-version: '3.14'
       - run: python -m pip install --require-hashes -r requirements-ci.txt
       - run: python -m tools.validate_repo
-      - run: python -m pytest tools/tests -q
-      - name: Package all skills independently
-        run: |
-          python -m tools.package_skill
       - name: Select affected skill tests
         id: changes
         env:
@@ -45,10 +42,10 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          if [ "$EVENT_NAME" = 'pull_request' ]; then
+          if [ "$EVENT_NAME" != 'workflow_dispatch' ]; then
             matrix=$(python -m tools.changed_skills "$BASE_SHA" "$HEAD_SHA")
           else
-            matrix=$(python -c 'import json; from tools.validate_repo import skills; print(json.dumps({"skill": skills()}, separators=(",", ":")))')
+            matrix=$(python -m tools.changed_skills all "$HEAD_SHA")
           fi
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
           if [ "$matrix" = '{"skill":[]}' ]; then
@@ -56,6 +53,18 @@ jobs:
           else
             echo 'has-skills=true' >> "$GITHUB_OUTPUT"
           fi
+      - name: Install package secret scanner
+        if: steps.changes.outputs.has-skills == 'true' || steps.changes.outputs.tooling == 'true'
+        run: python -m tools.install_binary gitleaks
+      - name: Shared repository tests
+        if: steps.changes.outputs.tooling == 'true'
+        run: python -m pytest tools/tests --ignore=tools/tests/test_external_checks.py -q
+      - name: Validate affected packages with secret scanning
+        if: steps.changes.outputs.has-skills == 'true'
+        env:
+          MATRIX: ${{ steps.changes.outputs.matrix }}
+        run: |
+          python -c 'import json, os; from tools.package_skill import package; from tools.validate_repo import ROOT; [package(ROOT/s, ROOT/"dist", scan_secrets=True) for s in json.loads(os.environ["MATRIX"])["skill"]]'
   tests:
     name: Skill tests (${{ matrix.skill }})
     needs: structure
@@ -85,6 +94,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -94,16 +104,25 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - run: python -m pip install --require-hashes -r requirements-ci.txt
+      - name: Select tooling regression tests
+        id: tooling
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -m tools.changed_skills "${BASE_SHA:-all}" "$HEAD_SHA" > /dev/null
       - run: npm ci --ignore-scripts
       - run: python -m ruff check .
       - run: python -m ruff format --check tools --exclude tools/vendor
       - run: yamllint .
       - run: npm run lint:markdown
       - run: npm run test:policy
+        if: steps.tooling.outputs.tooling == 'true'
       - run: python -m tools.install_binary actionlint
       - run: .ci-bin/actionlint/actionlint -color
       - run: python -m tools.install_binary gitleaks
+        if: steps.tooling.outputs.tooling == 'true'
       - run: python -m pytest tools/tests/test_external_checks.py -q
+        if: steps.tooling.outputs.tooling == 'true'
   security:
     name: Security
     runs-on: ubuntu-24.04
