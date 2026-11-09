@@ -73,11 +73,15 @@ PR checks and approved GitHub rules provide the merge boundary.
 
 1. Add `new-skill/SKILL.md` with a matching name and a clear description. Include
    arbitrary runtime resources beneath it; optional Python tests belong in tests/.
-2. Run `python -m tools.validate_repo`, `python -m pytest` and
+2. Run `python -m tools.update_catalog` and commit the generated README catalog
+   alongside the new skill folder. The catalog uses skill metadata; edit the skill's
+   display metadata rather than hand-editing its generated table. CI rejects a stale
+   catalog. No separate registry or skill-specific configuration is required.
+3. Run `python -m tools.validate_repo`, `python -m pytest` and
    `python -m tools.package_skill new-skill --scan-secrets`. Normal pytest automatically
    discovers new skills; no registry, workflow, pytest path or release manifest edit
    is needed. See [package policy](docs/releases.md#runtime-package-policy) for exclusions.
-3. Open a conventional PR. After merge into protected main, passing CI automatically
+4. Open a conventional PR. After merge into protected main, passing CI automatically
    versions and releases the affected skill. Keep credentials and generated files out
    of Git; develop evaluations in evals/ without making paid runs mandatory.
 
