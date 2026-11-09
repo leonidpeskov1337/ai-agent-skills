@@ -4,10 +4,18 @@ Reusable skills for cloud infrastructure, platform engineering, and security.
 
 ## Skill catalog
 
+Generated from each skill's metadata. After adding or updating a skill, run
+`python -m tools.update_catalog`; CI checks that this table is current.
+
+<!-- skill-catalog:start -->
+
 | Skill | What it helps you do | Start here |
 | --- | --- | --- |
-| [Kubernetes Troubleshooter](kubernetes-troubleshooter/README.md) | Investigate Kubernetes incidents with read-only diagnostics, historical Prometheus and Mimir metrics, and 32 playbooks. Covers capacity reviews, change verification, and Argo CD when it manages the affected workload. | [Incident prompt](kubernetes-troubleshooter/prompt.md) · [Argo CD guide](kubernetes-troubleshooter/ArgoCD/README.md) |
-| [GitLab Security Policies](gitlab-security-policies/README.md) | Design, audit, and troubleshoot centrally enforced GitLab security policies. Includes a policy linter, investigation playbooks, and a read-only survey of failed scan jobs. | [Policy prompt](gitlab-security-policies/prompt.md) · [Runbooks](gitlab-security-policies/references/runbooks.md) |
+| [Code Quality Platform](code-quality-platform/README.md) | Build and troubleshoot shared code-quality CI platforms | [Prompt template](code-quality-platform/prompt.md) |
+| [GitLab Security Policies](gitlab-security-policies/README.md) | Design, change, govern and troubleshoot GitLab security policies | [Prompt template](gitlab-security-policies/prompt.md) |
+| [Kubernetes Troubleshooter](kubernetes-troubleshooter/README.md) | Investigate Kubernetes incidents with evidence | [Prompt template](kubernetes-troubleshooter/prompt.md) |
+
+<!-- skill-catalog:end -->
 
 ## Getting started
 

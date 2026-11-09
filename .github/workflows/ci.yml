@@ -35,6 +35,8 @@ jobs:
           python-version: '3.14'
       - run: python -m pip install --require-hashes -r requirements-ci.txt
       - run: python -m tools.validate_repo
+      - name: Verify README skill catalog
+        run: python -m tools.update_catalog --check
       - name: Select affected skill tests
         id: changes
         env:
