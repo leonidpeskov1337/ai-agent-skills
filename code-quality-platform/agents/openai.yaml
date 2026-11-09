@@ -1,0 +1,4 @@
+interface:
+ display_name: "Code Quality Platform"
+ short_description: "Build and troubleshoot shared code-quality CI platforms"
+ default_prompt: "Use $code-quality-platform to diagnose this quality gate result with read-only evidence first, then propose the smallest correct fix."
