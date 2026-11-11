@@ -20,6 +20,12 @@ Measure each layer for working hours and off-hours over 7-14 days:
 4. Node CPU/memory on nodes hosting the workload (busiest node, not mean).
 5. Latency p95 and error rate during at-max hours vs off-peak.
 6. Dependency headroom: DB/cache CPU, connections, pooler limits.
+7. Replicas per node, eligible node capacity and actual placement labels. Compare
+   affinity/spread topology keys and nodeSelector keys/values against intended nodes:
+   `kubectl --context CONTEXT get nodes -l SELECTOR -L KEY`. The common hostname
+   key is `kubernetes.io/hostname`; verify live labels rather than assume a prefix.
+   Missing labels can neutralize soft preferences or exclude nodes/block scheduling,
+   depending on the rule. Confirm applied selectors, namespace scope and node placement.
 
 ## Logs and events
 HPA events at max (`ScalingLimited`), scheduler/provisioner events, latency alerts.
@@ -29,6 +35,10 @@ HPA events at max (`ScalingLimited`), scheduler/provisioner events, latency aler
  while app concurrency is low: tune request/target, not max.
 - **Node CPU saturated.** Pods per node burst into each other: more replicas on
  new nodes do add CPU; changing request or spread may do the same at lower cost.
+No CPU limit does not provide dedicated CPU: burst uses available node capacity
+and competes according to CPU shares/weights. Usage above request plus a busy node
+is a contention hypothesis, not proof that a particular request value is correct;
+check runnable work, CPU modes, latency and other tenants before sizing.
 - **Real demand.** Concurrency, queues and latency high at max with healthy
  dependencies: raise max, check dependency connection budget first.
 - **Dependency bound.** Latency driven by DB/cache: more replicas worsen it.
@@ -45,3 +55,9 @@ More replicas add connections and nodes; higher requests change bin-packing.
 
 ## Post-fix validation
 Time at max, latency p95 and node CPU at comparable working-hours load.
+
+Correcting a soft anti-affinity key changes scoring for newly scheduled pods only
+among nodes they can fit on; it does not redistribute existing pods automatically
+or guarantee autoscaler expansion. Raising requests may reduce packing density,
+but can instead leave pods Pending when no eligible capacity exists. Verify placement,
+Pending reasons, readiness and node cost after any separately approved change.

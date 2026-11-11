@@ -117,6 +117,16 @@ User-specified budgets, access scope and requested brevity take precedence:
 - Before/after comparisons list confounders (version upgrade, traffic, weekday,
  simultaneous infra changes) and call early data provisional.
 - A user-suggested value is a hypothesis to test against telemetry, not a target.
+- When retention permits, compare several same-weekday/time-of-day windows with
+matched traffic, revision and scrape coverage; one offset week can be atypical.
+If only one comparison exists, qualify the baseline and avoid a new-traffic claim.
+- Validate affinity/spread `topologyKey` and nodeSelector keys/values against
+actual labels on eligible nodes. Missing labels have rule-dependent effects;
+soft preferences can lose their intended effect while hard constraints can block placement.
+- Signals that move together inside one process (controllers, workers, threads)
+do not prove an external cause. Confirm dependency latency with the client's
+own outbound-call metric, local runtime/saturation evidence and peer clients on
+the same network path; a slow client call alone does not locate the delay.
 
 ## Execution safeguards
 

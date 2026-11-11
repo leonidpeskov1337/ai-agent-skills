@@ -52,6 +52,16 @@ Check `timestamp(metric)` vs evaluation time, `up` for known scrape jobs, data g
 query warnings/infos, retention and delayed ingestion. `up` itself may be absent or
 stale. An API success with an empty vector is not evidence of health.
 
+A log shipper's output host may be push-only; a readiness response does not
+establish a query API. A 404 may also mean a wrong prefix, gateway route or tenant.
+Confirm an approved read API (possibly a configured Grafana datasource proxy)
+without probing arbitrary paths or forwarding credentials to discovered hosts.
+`kubectl logs --previous` covers the previous container instance in an existing pod
+when retained, not arbitrary deleted/replaced pod UIDs. Rotated, evicted or deleted
+pod logs may be inaccessible through Kubernetes even if retained briefly on a node
+or in centralized storage. Report retention/read-path gaps and switch to permitted
+metrics, traces, events or existing sanitized artifacts; do not install a new collector.
+
 ## Collector allowlists and chart-native monitors
 
 Collectors such as Alloy/OTel/agent often relabel with `keep` on `__name__`.

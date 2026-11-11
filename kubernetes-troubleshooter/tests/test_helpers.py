@@ -1,5 +1,6 @@
 """Offline transport, safety and analysis behavior tests; no live credentials."""
 import json
+import io
 from pathlib import Path
 import sys
 import threading
@@ -10,7 +11,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from common import get_resources, kubectl, projection, redact, run
-from query_metrics import query
+from query_metrics import query, summarized, main as query_main
 from analyze_metrics import summarize
 from discover_observability import classify
 
@@ -79,6 +80,45 @@ class MetricsTests(unittest.TestCase):
         result = self.call("range", expression="up", start=100, end=200, step=30)
         self.assertIn("step=30", Handler.seen[0][0])
         self.assertEqual(result["response"]["warnings"], ["partial data"])
+
+    def test_summary_replaces_raw_samples_and_retains_evidence(self):
+        Handler.body = {"status": "success", "warnings": ["partial data"], "infos": ["annotation"],
+                        "data": {"resultType": "matrix", "result": [
+                            {"metric": {"pod": "a"}, "values": [[100, "1"], [130, "9"]]}]}}
+        raw = self.call("range", expression="up", start=100, end=200, step=30)
+        result = summarized(raw, above=5)
+        self.assertNotIn("response", result)
+        self.assertIn("response", raw)
+        self.assertEqual(result["source"], raw["source"])
+        self.assertEqual(result["collected_at"], raw["collected_at"])
+        self.assertEqual(result["limitations"], raw["limitations"])
+        series = result["summary"]["series"][0]
+        self.assertEqual((series["peak_at"], series["first_above"]), (130, 130))
+        self.assertEqual(series["metric"], {"pod": "a"})
+        self.assertEqual(result["summary"]["warnings"], ["partial data"])
+        self.assertEqual(result["summary"]["infos"], ["annotation"])
+        with self.assertRaisesRegex(ValueError, "instant or range"):
+            summarized({"source": {"mode": "names"}})
+
+    def test_summary_cli_outputs_statistics(self):
+        Handler.body = {"status": "success", "data": {"resultType": "vector", "result": [
+            {"metric": {"pod": "a"}, "value": [100, "9"]}]}}
+        args = ["query_metrics", "--base-url", self.base, "--query", "up",
+                "--allow-local-http", "--summary", "--above", "5"]
+        with patch.object(sys, "argv", args), patch("query_metrics.emit") as output:
+            query_main()
+        self.assertEqual(output.call_args.args[0]["summary"]["series"][0]["samples_above"], 1)
+        self.assertNotIn("response", output.call_args.args[0])
+
+    def test_invalid_summary_options_rejected_before_network(self):
+        for options in (["--above", "1"], ["--summary", "--above", "nan"],
+                        ["--summary", "--above", "inf"], ["--mode", "names", "--summary"],
+                        ["--mode", "metadata", "--summary"]):
+            with self.subTest(options=options), patch("query_metrics.query") as network:
+                with patch.object(sys, "argv", ["query_metrics", "--base-url", self.base, *options]), \
+                        patch("sys.stderr", io.StringIO()), self.assertRaises(SystemExit):
+                    query_main()
+                network.assert_not_called()
 
     def test_metadata_scopes_request_to_one_metric(self):
         name = "karpenter_nodeclaims_created_total"
@@ -231,6 +271,31 @@ class KubernetesTests(unittest.TestCase):
 
 
 class AnalysisTests(unittest.TestCase):
+    def test_peak_time_and_threshold_window(self):
+        result = summarize({"data": {"resultType": "matrix", "result": [
+            {"metric": {}, "values": [[0, "1"], [60, "22"], [120, "300"], [180, "52"], [240, "0"]]}]}},
+            above=20)
+        series = result["series"][0]
+        self.assertEqual((series["peak"], series["peak_at"]), (300, 120))
+        self.assertEqual((series["samples_above"], series["first_above"], series["last_above"]), (3, 60, 180))
+        for value in (float("nan"), float("inf"), -float("inf")):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                summarize({"data": {"resultType": "matrix", "result": []}}, above=value)
+
+    def test_summary_gaps_ties_and_nonfinite_timestamps(self):
+        series = summarize({"data": {"resultType": "matrix", "result": [
+            {"metric": {}, "values": [[600, "9"], [20, "0"], [10, "9"], [30, "NaN"],
+                                       ["Inf", "99"], [40, "5"]]}]}}, above=5)["series"][0]
+        self.assertEqual((series["peak_at"], series["dropped_samples"]), (10, 2))
+        self.assertEqual((series["samples_above"], series["first_above"], series["last_above"]), (2, 10, 600))
+        self.assertNotIn("duration_above", series)
+        none = summarize({"data": {"resultType": "vector", "result": [
+            {"metric": {}, "value": [1, "7"]}]}}, above=7)["series"][0]
+        self.assertEqual((none["samples_above"], none["first_above"], none["last_above"]), (0, None, None))
+        missing = summarize({"data": {"resultType": "matrix", "result": [
+            {"metric": {}, "values": [[0, "NaN"]]}]}}, above=0)["series"][0]
+        self.assertEqual((missing["finite_samples"], missing["peak_at"], missing["samples_above"]), (0, None, 0))
+
     def test_numeric_summary_preserves_series_and_drops_nonfinite(self):
         result = summarize({"status": "success", "data": {"resultType": "matrix", "result": [
             {"metric": {"pod": "a"}, "values": [[0, "1"], [60, "3"], [120, "NaN"]]},

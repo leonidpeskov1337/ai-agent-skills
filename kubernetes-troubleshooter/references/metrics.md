@@ -138,6 +138,57 @@ RPS, error rate, queue depth and trace critical paths. Scheduling latency and qu
 metrics depend on scheduler/exporter version; discover them rather than assume names.
 Control-plane/etcd absence is common in managed clusters, not proof of health.
 
+### Controllers and operators (controller-runtime)
+
+Discover the affected pod's exported names before inferring a cause. Use scoped
+`--mode names --selector '{namespace="NS",pod=~"POD.*"}'` with explicit incident
+`--start`/`--end` bounds and the verified cluster/tenant. Check collector allowlists
+and label sets; metric availability depends on controller/exporter/runtime versions.
+Client outbound-call metrics (for example Upjet's `upjet_resource_ext_api_duration`)
+can locate delay within the client-observed call, but do not alone distinguish
+remote processing from retries, SDK backoff, connection pools or network time.
+
+Starting expressions after deduplication and identity checks (add cluster/job
+matchers throughout; do not aggregate unrelated pods, controllers or leaders):
+
+```promql
+max by (namespace,pod,name) (workqueue_depth{namespace="NS",name=~"CONTROLLER.*"})
+sum by (namespace,pod,name) (rate(workqueue_adds_total{namespace="NS",name=~"CONTROLLER.*"}[5m]))
+sum by (namespace,pod,controller) (rate(controller_runtime_reconcile_time_seconds_sum{namespace="NS",controller=~"CONTROLLER.*"}[5m]))
+/ sum by (namespace,pod,controller) (rate(controller_runtime_reconcile_time_seconds_count{namespace="NS",controller=~"CONTROLLER.*"}[5m]))
+max by (namespace,pod,controller) (controller_runtime_max_concurrent_reconciles{namespace="NS",controller=~"CONTROLLER.*"})
+sum by (namespace,pod,operation) (rate(upjet_resource_ext_api_duration_sum{namespace="NS",pod=~"POD.*"}[5m]))
+/ sum by (namespace,pod,operation) (rate(upjet_resource_ext_api_duration_count{namespace="NS",pod=~"POD.*"}[5m]))
+histogram_quantile(0.99, sum by (namespace,pod,le) (rate(go_sched_latencies_seconds_bucket{namespace="NS",pod=~"POD.*"}[5m])))
+```
+
+A zero completion/call count gives an undefined mean, not zero latency. Inspect
+counts alongside each ratio. Histogram/summary exports and operation labels may
+differ; confirm units and instrumentation scope using help/source or known values.
+Map queue `name` to reconcile `controller` explicitly before comparing them. Check
+active workers, reconcile errors/requeues/retries, leader changes and queue wait
+latency where available. Workqueues deduplicate keys; adds need not equal external
+requests, and one hot key may not benefit from additional workers.
+
+Under roughly steady conditions, arrivals/second times mean reconcile seconds
+estimates occupied workers, not a recommended concurrency setting. Use matched
+windows and populations, and include headroom, retries and dependency quotas.
+Flat sampled adds with rising depth suggests reduced effective service capacity;
+it does not exclude a short burst hidden by scrape/rate windows, a worker change,
+locking, requeues or another constraint. Correlated controllers in one process
+share CPU, GC, locks, client pools and network paths: they are not independent
+proof of an external cause. Flat Go scheduler latency only weakens runnable-delay
+hypotheses at the observed resolution; inspect node/cgroup CPU, throttling, run
+queue, GOMAXPROCS, GC, locks, restarts and missing samples too.
+
+`rest_client_*` describes the Kubernetes API client, not arbitrary cloud SDK calls.
+Compare other clients of different endpoints over the same verified egress path
+in the same minutes, and compare their normal spike frequency across several
+matched days. Different endpoints may use different DNS/proxy/NAT routes. Keep
+remote service degradation versus shared egress unresolved without discriminating
+phase timings, peer comparisons or provider evidence. Adjust concurrency, polling
+or alert duration only after evaluating recurrence, user impact, quotas and risk.
+
 ## Patterns from the supplied incident summaries
 
 ### Segment by time of day and by unit
@@ -270,6 +321,11 @@ timestamp, a duration or a remaining time (a "licence" gauge may be seconds
 remaining, not an epoch). Read HELP text where the backend exposes it
 using `query_metrics.py --base-url URL --mode metadata --selector NAME` and
 cross-check one value against a known fact. Check type, help and unit when present.
+Metadata may be absent from a remote-write/collector path even when samples exist.
+An empty metadata result therefore does not prove the metric is absent; confirm
+with scoped names/series discovery and inspect exporter documentation/source or
+known values for type and units. Empty series can still reflect retention, a wrong
+tenant/window/selector or a forwarding gap; distinguish these before claiming absence.
 Application-level queue metrics may come from a separate exporter, not the app.
 
 ### Blackbox probe phases
@@ -288,11 +344,21 @@ calling it a backend cause. Inspect individual target probes as well as means.
 
 ```sh
 python scripts/query_metrics.py --base-url https://approved-gateway/prometheus --mode range --query 'rate(container_cpu_usage_seconds_total{namespace="payments",pod="api-abc",container="api"}[5m])' --start 1793444400 --end 1793448000 --step 60
+python scripts/query_metrics.py --base-url https://approved-gateway/prometheus --mode range --query 'workqueue_depth{namespace="payments",name="CONTROLLER",pod="POD"}' --start 1793444400 --end 1793448000 --step 300 --summary --above 20
 python scripts/analyze_metrics.py sanitized-response.json
 ```
 
-The summarizer computes finite-sample mean, peak, nearest-rank time-sample p95,
-endpoint change and change/second per series. It drops non-finite values explicitly.
+The summarizer computes finite-sample mean, peak, peak time, nearest-rank time-sample p95,
+endpoint change and change/second per series. With `--above` it also reports how
+many finite samples strictly exceeded the value and the first and last such UTC
+Unix timestamps. These are sampled bounds, not continuous time above threshold:
+gaps, coarse steps and separate bursts can span the first/last observations.
+`peak_at` is the earliest sampled timestamp when the maximum ties. Non-finite
+values/timestamps are dropped and counted. API warnings and infos are retained.
+Use `--summary` on `query_metrics.py` instead of ad hoc parsers. Summary output is
+client-side after the same bounded raw fetch; it does not reduce backend query cost
+or relax transport/sample budgets. Peaks remain sampled at the selected step,
+not guaranteed true instantaneous maxima.
 Use rate-derived data for counters. Its p95 is not request p95; gaps and uneven
 sample spacing bias summaries. Compare matching baseline/incident summaries and
 report both absolute change and deviation (undefined if baseline zero). Retain exact
