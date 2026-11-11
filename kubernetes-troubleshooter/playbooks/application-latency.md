@@ -42,6 +42,20 @@ Production-proven discriminators:
  growing = blocked on a dependency (see [managed dependencies](managed-dependencies.md)).
  CPU high on the busiest node with several replicas per node = node CPU contention.
 - Segment working hours vs off-hours and look at the busiest pod's queue, not the mean.
+- Align probe spikes with the server request queue (for example Puma
+`puma_queued_connections`) with matched timestamps, scrape coverage and step.
+Matching spikes with healthy dependency signals strengthen local queue/capacity
+hypotheses; they do not exclude an uninstrumented backend or a shared bottleneck.
+- Attribute load by endpoint mix when request logs are unavailable: a burst of
+per-resource GETs (hooks, variables, approval rules, access tokens) on workdays
+only is consistent with IaC/provider refresh, but UIs, pollers and other automation
+can produce similar patterns. Correlate authorized job schedules, source/workload
+identity and revisions before attribution. Use low-cardinality route/operation
+labels, not raw URLs, resource IDs or tokens. Compute server-time share from matched
+request-duration sum rates for the operation and total; state the denominator and
+that concurrent request time is not CPU time or wall-clock utilization.
+- Compare several same-weekday/time-of-day windows when available, with matched
+traffic/revision/coverage; one offset week can be atypical.
 - After a fix plus an upgrade on the same day, report the improvement as
  confounded and provisional.
 

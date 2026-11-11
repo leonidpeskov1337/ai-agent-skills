@@ -47,6 +47,17 @@ pooler logs showing growing server connections or waiting clients.
 - **Connection storm.** Clients reconnect on timeout; connection count doubles
  during the stall. Cause or effect? Check which rose first.
 - **Provider failover.** Event at T; brief total outage, then recovery.
+- **Slow external API behind a controller.** Workqueue depth rises with flat adds
+while reconcile time and the controller's outbound-call latency rise together;
+process CPU and Go scheduler latency appear unchanged at sufficient resolution.
+These weaken some local saturation hypotheses but do not rule them out: check
+throttling, node run queue, GOMAXPROCS, GC and locks, process restarts, active workers
+and scrape gaps. Correlated controllers in one process are not independent evidence.
+A slower outbound-call metric establishes client-observed call delay; distinguish
+client retries/rate limiting/pool waits, network/egress and remote service time.
+Compare clients of other
+endpoints on the same egress path to separate the remote service from NAT,
+proxy or DNS. See controller metrics in [metrics](../references/metrics.md).
 - **App regression.** New query pattern after rollout; compare revisions.
 
 ## Confirmation criteria

@@ -94,3 +94,48 @@ findings. Offline evaluation fixtures are explicitly synthetic.
  after a cache resize, a DB resize and an application upgrade on the same day.
 - Report: improvement real but not attributable to one change; provisional
  until a full working week.
+
+## 9. Probe latency with packed replicas and an ineffective topology key
+
+User-supplied generalized production report; measurements and follow-up outcomes
+were not independently reproduced by this repository's maintainer.
+
+- Reported probe processing time was 2.5-3.3 s alongside 100-246 queued requests;
+  observed dependency p95 stayed flat. Eight replicas shared three eight-vCPU
+  nodes; two nodes were reported at 94-97% busy. CPU mode detail still matters.
+- The configured soft anti-affinity used `topology.kubernetes.io/hostname`, which
+  was absent on the intended nodes. Verify actual node labels, eligible capacity
+  and applied selectors rather than treating a label prefix as universally valid.
+- Endpoint mix attributed 34% of measured server request time to provider-refresh
+  operations in the supplied report. Similar GET patterns are only attribution
+  leads without corroborating automation/source evidence; that share is not CPU.
+- One offset week was atypically quiet. Multiple comparable weekdays changed the
+  traffic conclusion and required an explicit retraction of the first claim.
+- Follow-up: correcting the key alone did not redistribute pods. Soft preferences
+  rank feasible nodes for new placements; they do not mandate rebalancing or new
+  capacity. In this case, the CPU request change reduced packing. Requests must be
+  sized against measured demand, available nodes, Pending risk and cost, not a
+  universal high-node-CPU threshold. The supplied result does not validate every
+  concurrent change independently.
+
+## 10. Controller backlog with slow client-observed external API reads
+
+User-supplied retrospective report; the repository has not rerun the investigation.
+
+- Reported depth rose from zero to about 300 for roughly ten minutes, once in
+  seven days. Adds were approximately 2.7/s and mean reconcile time rose from
+  0.5 s to 5.4 s: about 14.6 occupied workers under steady-state assumptions,
+  compared with a maximum of ten. This estimates a service-capacity shortfall,
+  not the root cause or a safe new worker count.
+- Several controllers slowed together but shared one process, making that weak
+  discrimination between local and external causes. Scoped metric-name discovery
+  found an outbound-call metric: observed read duration rose from 0.26 s to 2.77 s,
+  while connect time, process CPU, scheduler latency, restarts and errors were
+  reported flat. This supports delay during client-observed calls; instrumentation
+  boundaries and runtime resolution still limit the conclusion.
+- A peer cloud client spiked in the same minute but also spiked on normal days.
+  The remote service versus shared-egress mechanism remained unresolved. Flat
+  scheduler latency does not categorically eliminate CPU starvation, GC or locking.
+- The supplied investigation treated the alert as informational. Alert-duration,
+  concurrency or polling changes require independent impact/recurrence and quota
+  evidence; the skill does not automatically suppress or tune alerts from this case.

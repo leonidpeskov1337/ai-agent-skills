@@ -9,6 +9,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from analyze_metrics import summarize
 from common import MAX_BYTES, emit, now
 
 TOTAL_TIMEOUT = 20
@@ -120,6 +121,13 @@ def query(base, mode, expression=None, start=None, end=None, step=60, at=None,
             "Labels can contain sensitive data. Empty results do not prove health."}
 
 
+def summarized(result, above=None):
+    if result["source"]["mode"] not in ("instant", "range"):
+        raise ValueError("summary requires instant or range mode")
+    return {"collected_at": result["collected_at"], "source": result["source"],
+            "summary": summarize(result, above), "limitations": result["limitations"]}
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--base-url", required=True, help="Approved API base, e.g. https://mimir/prometheus")
@@ -137,7 +145,15 @@ def main():
     p.add_argument("--cert", help="Approved mTLS client certificate")
     p.add_argument("--key", help="mTLS private key file; never printed")
     p.add_argument("--allow-local-http", action="store_true")
+    p.add_argument("--summary", action="store_true",
+                   help="Return per-series sample statistics instead of raw samples")
+    p.add_argument("--above", type=float,
+                   help="With --summary: count samples strictly above a finite value")
     a = p.parse_args()
+    if a.above is not None and (not a.summary or not math.isfinite(a.above)):
+        p.error("--above requires --summary and a finite threshold")
+    if a.summary and a.mode not in ("instant", "range"):
+        p.error("--summary requires instant or range mode")
     if any(name and not os.environ.get(name) for name in (a.token_env, a.tenant_env)):
         p.error("configured auth environment variable is missing or empty")
     try:
@@ -145,7 +161,7 @@ def main():
                        os.environ.get(a.token_env) if a.token_env else None,
                        os.environ.get(a.tenant_env) if a.tenant_env else None,
                        a.ca, a.cert, a.key, a.allow_local_http, a.selector)
-        emit(result)
+        emit(summarized(result, a.above) if a.summary else result)
     except (ValueError, OSError):
         # Keep CLI failures free of endpoints, header values and private key paths.
         emit({"ok": False, "error": "metrics_request_failed",

@@ -82,3 +82,24 @@ OS DNS resolution may have its own deadline).
 Future improvements: controlled disposable-cluster integration tests, versioned
 exporter schemas, approved SigV4/OAuth adapters, trace/log correlation adapters and
 repeated blinded behavioral evaluations with real incident artifacts.
+
+
+## Rounds 3-4 investigation feedback
+
+On 2026-11-11 the user supplied generalized probe-latency and controller-workqueue
+investigation feedback against d36d359. Patterns 9-10 retain their reported numbers
+and corrections as attributed incident observations, not maintainer-run benchmarks.
+Offline tests validate metric-summary and transport behavior only.
+
+Technical interpretation was cross-checked against:
+- [Kubernetes scheduling and affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/):
+  soft scoring versus required placement and missing topology labels.
+- [Kubernetes logging architecture](https://kubernetes.io/docs/concepts/cluster-administration/logging/):
+  previous-container access, rotation, pod eviction and cluster-level retention.
+- [Controller-runtime metrics source](https://github.com/kubernetes-sigs/controller-runtime/blob/main/pkg/internal/controller/metrics/metrics.go)
+  and [worker configuration](https://github.com/kubernetes-sigs/controller-runtime/blob/main/pkg/controller/controller.go):
+  metric meanings, concurrency and deduplicated work items.
+- [Upjet metric definitions](https://github.com/crossplane/upjet/blob/main/pkg/metrics/metrics.go):
+  exporter-specific external-call observations; verify the deployed version.
+- [Go runtime metrics](https://pkg.go.dev/runtime/metrics): runnable scheduling
+  delay is one signal, not a comprehensive exclusion of local contention.
