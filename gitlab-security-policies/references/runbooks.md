@@ -51,8 +51,9 @@ fi
 4. [Resync](#resync)
 5. [Pipelines and jobs](#pipelines-and-jobs)
 6. [Findings](#findings)
-7. [Survey failed policy jobs](#survey-failed-policy-jobs)
-8. [Test a change on non-prod](#test-a-change-on-non-prod)
+7. [Ingestion root cause](#ingestion-root-cause)
+8. [Survey failed policy jobs](#survey-failed-policy-jobs)
+9. [Test a change on non-prod](#test-a-change-on-non-prod)
 
 
 ## Version and schema
@@ -189,6 +190,19 @@ api "projects/$P/jobs/<job_id>" | jq '.artifacts'               # which reports 
 ```
 
 
+A pipeline that failed before creating any jobs has no job log to inspect. REST
+`yaml_errors` may be null. Use the project-scoped pipeline **IID**, not its global REST ID:
+
+```sh
+gql '{ project(fullPath:"acme/payments/app") { pipeline(iid:"<iid>") {
+ status failureReason configSource errorMessages { nodes { content } } } }'
+```
+
+Compare the creation error with the last good pipeline and the effective project/policy stages.
+For example, a new PEP can expose an undeclared `scan-policies` project stage. A null pipeline
+or GraphQL `errors` is not proof of no configuration error: check identity, permissions and
+field availability at the running version.
+
 To see which variables a policy locks, search the job log for "User-defined CI/CD variables
 are allowed … (except for …)".
 
@@ -230,6 +244,35 @@ up in `securityReportSummary`, not here.
 To classify dependency findings by location (manifest per module, test classpath, and so on),
 group the `location.file` values.
 
+
+## Ingestion root cause
+
+**Read-only first.** Record project, pipeline/job IDs, ref/SHA, report type/version, artifact
+declaration, job status and ingestion banner. Inspect the pipeline Security tab and summary;
+allow for asynchronous processing. Check that the schema version is supported by the instance.
+Preserve a sanitized report sample without exposing snippets, credentials or sensitive findings.
+
+Ask an authorized instance administrator for Sidekiq logs around pipeline completion and
+ingestion, correlated to the exact pipeline/scan. Kubernetes container logs may rotate quickly;
+central log retention varies. Capture the underlying exception, not only `ScanIngestionError`.
+In the supplied 19.4.5 report, a `Security::Scan` in `preparation_failed` hid
+`ActiveRecord::StatementInvalid: PG::Error: invalid multibyte character` behind that wrapper.
+Do not assume every wrapper error has the same cause.
+
+**WRITE: controlled replay requires separate explicit authorization.** If logs cannot explain
+the failure, an administrator may reproduce it on a non-production copy using the store-service
+implementation at the exact GitLab version. A Rails transaction that is always rolled back can
+help diagnose database changes, but service replay is **not read-only**: jobs, network calls,
+callbacks, locks and other effects may escape rollback. Inspect those paths first, isolate
+external effects and never commit. Do not replay against production merely because a rollback
+is planned. Prefer source inspection and existing logs when write authorization is absent.
+
+When the producer is responsible, release corrected output and run a fresh scan after approval.
+For the reported surrogate-pair bug, use literal UTF-8 (Python `ensure_ascii=False`, UTF-8 file
+encoding) and test an emoji finding through ingestion, not just schema validation. Valid paired
+JSON escapes are legal; malformed Unicode is a separate defect. Avoid patching live parser state
+or editing stored findings: later processing can reload the original artifact. Verify the new
+pipeline summary and, on the default branch, the project Vulnerability Report and finding states.
 
 ## Survey failed policy jobs
 

@@ -136,6 +136,14 @@ Add scheduled scans for dormant default branches, so new advisories reach unchan
  detect it: compare pushes against pipelines.
 
 
+**Adding a PEP beside existing SEPs is a stage-layout change.** Before rollout, search scoped
+CI files and their includes for `stage: scan-policies` and other implicitly injected names.
+Compare effective stages, artifact-producing jobs and scan stages with a canary pipeline;
+CI lint alone may not cover every policy/source combination. Test ordinary failures, no-job
+creation failures, skipped scans and artifact consumption across the pipeline types in scope.
+If the rollout breaks creation, revert the new PEP scope through the owning mechanism after
+authorization, preserve required SEP coverage, and verify recovery before expanding again.
+
 ## Gates
 
 

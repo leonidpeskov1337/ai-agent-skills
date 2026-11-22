@@ -5,6 +5,14 @@
   often mistake for the scan) must be `success`, with the report artifact present. A 413 or a
   failure means nothing was ingested. A failed resolution job silently falls back to direct
   dependencies only, so transitive findings disappear.
+   **Uploaded but not ingested?** A green scanner and schema-valid report do not prove storage.
+   A parsing banner, `ScanIngestionError`, or a zero `securityReportSummary` despite report
+   findings warrants checking schema support, asynchronous processing and the underlying error
+   ([runbook](../references/runbooks.md#ingestion-root-cause)). In one reported 19.4.5 case,
+   valid escaped non-BMP characters caused a database encoding failure; literal UTF-8 output
+   fixed that producer. Check malformed Unicode too, but do not diagnose by an escape alone.
+   For project Vulnerability Report tracking, verify successful default-branch ingestion;
+   tag/feature-branch pipeline findings are not the same view.
 2. **Right pipeline?** An MR's findings come from the MR pipeline at its head. Compare them with
   the target branch, where the finding may already exist and is then not "new".
 3. **Dependency in scope?** Check that the package and version are in the graph or SBOM. Look for
