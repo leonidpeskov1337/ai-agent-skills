@@ -252,6 +252,34 @@ pipeline_execution_schedule_policy:       # max 5, one schedule each
 - **Prefer the structured schedule form** (`daily`/`weekly`/`monthly`) for PEP schedules.
 
 
+### PEP runtime checklist
+
+- Prefer reserved `.pipeline-policy-pre`/`.pipeline-policy-post` stages for portable placement.
+  Declare custom `stages:` only with a tested ordering across scoped projects. Omitting it
+  uses default `build`, `test`, `deploy`, which can move non-DAST SEP jobs out of `scan-policies`.
+  See [runtime behavior](gitlab-behaviour.md#pipeline-execution-policies-runtime).
+- Use the pre-stage only for real gates. Use `when: always` for independent post-stage scans
+  that must survive ordinary project failures; it does not bypass a failed policy pre-stage.
+- Pin `content.include.ref` to a reviewed SHA or protected immutable tag. Deny variable overrides
+  with `allowed: false` and a minimal `exceptions` allowlist; verify dotenv handling too.
+- If a protected central multi-project pipeline is necessary for credentials, review its entire
+  input boundary. Disable trigger forwarding with
+  `forward: {yaml_variables: false, pipeline_variables: false}` and `inherit:variables: false`,
+  validate explicit inputs, and restrict central pipeline variables with
+  `ci_pipeline_variables_minimum_override_role: no_one_allowed`. The supplied rollout used
+  `strategy: depend`; choose status propagation supported by the running version (`mirror`
+  where appropriate). Check the actual triggering identity and protected-ref permissions.
+- Prefer OIDC with narrow project/ref/audience trust. Never execute source-project build scripts
+  or artifacts with central credentials. Validate fetched artifact provenance and exact SHA.
+  Confirm that reports reach the intended project's pipeline; cross-project forwarding does
+  not automatically populate the source project's Vulnerability Report.
+- Validate custom reports against an instance-supported schema and test actual ingestion,
+  finding identity and UTF-8 non-BMP text. Do not ingest partial snapshots as full reports
+  unless that report type/version has proven incremental lifecycle semantics.
+- For scheduled PEPs, test the default branch and any exact named branches; policy-only jobs
+  cannot assume project build jobs ran. Generate required artifacts or fetch verified artifacts
+  with retention covering missed runs. Read back access and variable settings after changes.
+
 ## Scoping
 
 

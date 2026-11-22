@@ -44,6 +44,15 @@ The regexes in `scripts/survey_failed_jobs.py` mirror these tables. Keep the two
 | DAST job never appears on push | Expected: PEP schedule jobs only in `pipeline_execution_policy_schedule` pipelines | — | Check scheduled pipelines |
 | DAST job created untagged, pending forever | SEP `dast` action without validated site profile | platform | Move to PEP schedule policy |
 | Policy job in some projects only | Scope (`including`/`excluding`, compliance framework) | platform | Query `policyScope` on the loaded policy |
+| Pipeline `failed` with **no jobs** after a PEP rollout; GraphQL `errorMessages`: `chosen stage scan-policies does not exist` | A PEP may have introduced `test`, so SEP jobs moved to `test`; a project job hard-codes `scan-policies` | project (platform for rollout) | Declare the stage in project `stages:`. Before rollout, search scoped projects for `stage: scan-policies` |
+| `Cyclic dependencies detected when enforcing policies` | PEP stage order conflicts with project stage order | platform/project | Align stage order, or use reserved stages only |
+| PEP job fails: `Project <path> not found or access denied` | Users or the policy bot cannot read the CI content project | platform | Check triggering identity and pinned include ref; grant read access, or enable the policy project's pipeline-execution access setting |
+| PEP job `skipped` | Earlier non-`allow_failure` job failed and the policy job uses `when: on_success` | platform | `when: always` for independent scans; a failed `.pipeline-policy-pre` gate still skips later jobs |
+| PEP job present twice per commit | Overlapping push/MR rules; the variable alone does not suppress pushes | platform | Deduplicate or choose one pipeline type |
+
+These pipeline-creation and ingestion symptoms are outside the failed-job survey: a pipeline
+with no jobs has no trace, and ingestion can fail after a successful scan job. Inspect them
+via the [runbooks](runbooks.md#pipelines-and-jobs); use `--job-regex` for custom PEP job names.
 
 
 ## Job level: any scanner
@@ -107,6 +116,11 @@ Jobs: `dependency-scanning:<maven|gradle|python>-resolution` (`.pre`) produce gr
 6. Is the MR widget truncated? Check the pipeline Security tab.
 7. "Too many findings": group by manifest file and configuration (test/lint/debug/release); count
   per module duplication; separate SCA from SAST before judging validity.
+8. Report uploaded but `ScanIngestionError` or a parsing banner appears? Inspect the stored
+  exception via [ingestion root cause](runbooks.md#ingestion-root-cause). Schema validity does
+  not prove successful storage. Escaped surrogate pairs triggered a reported 19.4.5 bug,
+  but are legal JSON and are not a diagnosis without the underlying error. Fix the producer
+  when implicated and run a fresh scan; distinguish default-branch tracking from pipeline findings.
 
 
 ## Gates and exceptions
