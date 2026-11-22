@@ -84,6 +84,32 @@
        "Flags mergeRequestResyncSecurityPolicies as experimental and unverified if suggested",
        "Labels any resync mutation as a write operation requiring approval"
      ]
+   },
+   {
+     "id": 8,
+     "prompt": "Since we enabled a new pipeline execution policy for our mobile project, every MR pipeline fails immediately with no jobs. Our scan execution policies were fine before. What happened?",
+     "expected_output": "Investigates pipeline creation with GraphQL errorMessages, then compares effective stages with the last good pipeline. Explains the PEP/SEP stage-collision hypothesis and verifies it before proposing a project stage declaration and compatible ordering.",
+     "files": [],
+     "assertions": [
+       "Uses project-scoped pipeline IID and GraphQL errorMessages when REST yaml_errors is empty",
+       "Explains how PEP default stages can move non-DAST SEP jobs from injected scan-policies to test",
+       "Checks for an undeclared project stage and conflicting ordering rather than asserting the cause without evidence",
+       "Proposes canary verification and a scoped pre-rollout search, without performing a policy write or retry",
+       "Does not claim the failed-job survey detects a pipeline with no jobs"
+     ]
+   },
+   {
+     "id": 9,
+     "prompt": "Our custom scanner job uploads a schema-valid security report and the job is green, but the Security tab shows 'Error parsing security reports [ScanIngestionError]' and the Vulnerability Report has nothing. Is it GitLab or us?",
+     "expected_output": "Separates successful upload, schema validity and ingestion/storage. Requests the real correlated exception and checks schema support, processing and default-branch tracking. Treats the reported surrogate-pair bug as one version-specific hypothesis; recommends a corrected producer and fresh scan only when supported by evidence.",
+     "files": [],
+     "assertions": [
+       "Checks the supported schema, report declaration, pipeline ref and underlying ingestion exception",
+       "Distinguishes a legal escaped JSON surrogate pair from malformed Unicode and the attributed 19.4.5 storage bug",
+       "Prefers authorized logs; treats Rails store-service replay as a write even with rollback and does not run it",
+       "Recommends producer correction plus an emoji ingestion regression and a fresh scan if encoding is implicated",
+       "Distinguishes pipeline findings from default-branch Vulnerability Report tracking"
+     ]
    }
  ]
 }

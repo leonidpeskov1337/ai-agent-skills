@@ -40,3 +40,37 @@ Jobs: `dependency-scanning:<ecosystem>-resolution` runs in `.pre` and produces g
   - the findings appear in the pipeline's Security tab.
 7. **Survey for siblings.** The same plugin or convention usually fails in many projects. Fix it
   once at the shared convention.
+
+8. **Slow resolution delaying builds?** Measure the `.pre` job's critical-path impact first;
+  jobs using `needs` may start independently. If the project already builds the same dependency
+  scope, evaluate exporting its graph there and disabling only that ecosystem's automatic
+  resolution. Use the checklist below; do not trade runtime for missing transitive coverage.
+
+## Graph in the build job
+
+For a Gradle canary (Maven uses its own supported export format):
+
+1. Generate `gradle.graph.txt` in the existing build job. For multiple modules, register a
+   `DependencyReportTask` per project with a reviewed init script, writing each graph into
+   that module's directory. Run included builds separately (`-p <dir>`); a root-only
+   `dependencies` invocation does not establish complete coverage.
+2. Check every expected module graph for non-empty, successfully resolved dependencies and
+   representative direct/transitive packages. Upload `**/gradle.graph.txt` as artifacts.
+3. Inspect the merged pipeline: the producer must finish before the scan, in an earlier stage
+   or through supported explicit artifact dependencies. Verify actual artifact downloads.
+   An injected `scan-policies` stage can precede all project stages if `build` is absent.
+4. Set `DS_DISABLED_RESOLUTION_JOBS: gradle` only for pipelines that reliably produce the graph,
+   through the owning policy/configuration mechanism. Preserve any other disabled-ecosystem
+   entries deliberately. If only MR pipelines build graphs, a tested
+   `workflow:rules:variables` condition can leave default-branch resolution enabled. Confirm
+   policy variable locking does not override the intended value.
+5. Compare SBOM component sets, transitive scope, finding UUIDs/states and counts against the
+   same revision and advisory data before and after. Equal counts alone do not prove parity.
+   Test MR, default branch, merged results/train and scheduled sources that are in scope.
+6. Record critical-path improvement, failures and ingestion evidence. On missing/incomplete
+   graphs, fail visibly and restore the automatic resolver rather than accept manifest fallback.
+
+Both approaches execute project build tooling. Keep platform secrets out of the producer.
+The supplied 19.4.5 Android example reports 899 seconds in `.pre` versus project jobs starting
+in about five seconds with graph generation moved into the build. This is attributed canary
+evidence, not a guaranteed speed-up or a complete scan-duration comparison.

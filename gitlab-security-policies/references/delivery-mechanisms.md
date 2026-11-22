@@ -80,6 +80,24 @@ Practices:
 - Order matters. Link override projects before you exclude projects from the group policy.
 
 
+### Provider gaps and large inventories
+
+- The supplied rollout reports missing `spp_repository_pipeline_access` support in its 18.x
+  provider, and missing `ci_pipeline_variables_minimum_override_role` in older providers.
+  Inspect the pinned provider schema/release notes first; these are not permanent gaps. If
+  needed, use a reviewed idempotent API step (for example, `terraform_data` keyed on the desired
+  value), read back the value and document ownership/drift. Pass tokens via protected
+  environment or credential files; never interpolate them into commands or generated state.
+- Large `TF_VAR_*` inventories can exceed OS process argument/environment limits
+  (`fork/exec .../terraform: argument list too long`). Generate a workspace-local
+  `*.auto.tfvars.json` instead; keep sensitive/generated inventory out of Git and CI logs,
+  restrict access and remove it after use.
+- YAML lists with different object shapes decode as tuples, and `tolist()` can fail to find
+  a common element type. Normalize each item into the same explicit attribute types before
+  conversion. `merge(defaults, item)` supplies missing attributes but does not fix conflicting
+  types; `try(item.field, [])` handles absent fields, not every type error. Validate inventory
+  early rather than letting defaults silently expand policy scope.
+
 ## API scripts (REST + GraphQL)
 
 

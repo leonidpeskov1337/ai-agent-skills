@@ -3,6 +3,19 @@
 
 ## Provenance
 
+The 2026-11-22 additions use the supplied PEP/custom-report rollout feedback targeting
+repository commit `1c0e4c3`. The reporter attributes observations to self-managed GitLab EE
+19.4.4–19.4.5, alongside existing SEPs and a third-party custom-report producer. Maintainers
+did not access that instance, reproduce its pipelines or independently verify the reported
+schema range, timings, database exception or provider gaps. These remain attributed observations.
+Current primary documentation was checked for stage injection, variables, token endpoint access,
+schedules and graph export. Verify running-version source/schema before applying the details.
+
+The feedback's universal claims were narrowed: valid JSON surrogate pairs are not intrinsically
+invalid; a service replay is a write even with transaction rollback; token access is
+endpoint/version-specific; central credentials require an untrusted-input boundary; and a root
+Gradle graph or equal component count does not establish complete multi-module coverage.
+
 The KICS additions on 2026-11-05 use the supplied incident report for GitLab EE
 19.4, analyzer `kics` 6.13.0 and KICS 2.1.20. The reporter describes native
 reproduction and a confirming non-production run. Repository maintenance did not
@@ -67,6 +80,27 @@ then the latest docs.
  `gitlab_project_security_policy_attachment`.
 
 
+- SEP job-stage selection: https://docs.gitlab.com/user/application_security/policies/scan_execution_policies/#job-stages
+- PEP reserved stages and injection:
+ https://docs.gitlab.com/user/application_security/policies/pipeline_execution_policies/#job-stage-best-practice
+ and https://docs.gitlab.com/user/application_security/policies/pipeline_execution_policies/#stages-injection
+- Graph export in existing build jobs:
+ https://docs.gitlab.com/user/application_security/dependency_scanning/dependency_scanning_sbom/#create-lockfile-or-dependency-graph-export-manually
+ (Gradle: `#gradle-dependencies-task`; switch: `#disable-dependency-resolution`;
+ trust boundary: `#security-considerations-for-dependency-resolution`).
+- Versioned report schemas: https://gitlab.com/gitlab-org/security-products/security-report-schemas
+- Third-party scanner format and identity: https://docs.gitlab.com/development/integrations/secure/
+ Verify the DAST-specific location fingerprint in `lib/gitlab/ci/reports/security/locations/dast.rb`
+ at the installed GitLab tag; generic location rules differ by scanner.
+- CI conditions and artifact flow: https://docs.gitlab.com/ci/yaml/#ruleschanges
+- Multi-project identity and variable forwarding: https://docs.gitlab.com/ci/pipelines/downstream_pipelines/
+- Variable roles and precedence: https://docs.gitlab.com/ci/variables/#restrict-pipeline-variables
+- Job-token endpoint matrix and target allowlists: https://docs.gitlab.com/ci/jobs/ci_job_token/
+- Project settings API: https://docs.gitlab.com/api/projects/
+- Provider project schema (select the pinned version):
+ https://registry.terraform.io/providers/gitlabhq/gitlab/latest/docs/resources/project
+
+
 ## Standards
 
 
@@ -119,3 +153,6 @@ Search `gitlab-org/gitlab` issues for the following phrases:
 - "dependency resolution gradle toolchain";
 - "CycloneDX 413";
 - "auto_dismiss existing projects".
+- "ScanIngestionError invalid multibyte character";
+- "pipeline execution policy scan-policies stage";
+- "Cyclic dependencies detected when enforcing policies".

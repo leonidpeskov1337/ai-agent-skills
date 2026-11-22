@@ -11,6 +11,14 @@
 
   SEP cannot override either. Owner: the project, or the platform if enforcement must move to a
   PEP.
+   **Pipeline exists but failed with no jobs?** Check configuration creation errors before
+   job execution. REST `yaml_errors` can be null; query GraphQL
+   `pipeline(iid: "<iid>") { errorMessages { nodes { content } } }` using the
+   [recipe](../references/runbooks.md#pipelines-and-jobs). If it names a missing stage, compare
+   effective stages and the last good pipeline. A newly scoped PEP can introduce `test`,
+   moving non-DAST SEP jobs out of injected `scan-policies` and exposing a project job that
+   used that stage without declaring it. Declare every stage the project uses and align its
+   ordering with policy stages. This is a configuration failure that a policy rollout can cause.
 3. **What did GitLab load?** Query the project's loaded policies with
   `relationship: INHERITED`:
   - Nothing loaded, or the names are stale → step 4.
