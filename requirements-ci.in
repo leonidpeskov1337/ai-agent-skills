@@ -1,5 +1,5 @@
 # Build-time tools only. Skill helpers retain their standard-library runtime.
-ruff==0.17.4
+ruff==0.17.5
 pytest==9.2.0
 PyYAML==6.0.3
 jsonschema==4.26.0
